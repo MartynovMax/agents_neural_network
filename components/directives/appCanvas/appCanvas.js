@@ -35,20 +35,21 @@
 
     function init() {
       var numberAgents = 1;
+      var numberFoods  = 1;
       var agents = [];
       var foods  = [];
 
       for (var i = numberAgents; i >= 1; i--) {
         agents.push({
-          x: 400 * i + 50,
-          y: 150 * i + 50,
+          x: _randomInteger(100, 600),
+          y: _randomInteger(100, 300),
         });
       }
 
-      for (var i = 1; i >= 1; i--) {
+      for (var i = numberFoods; i >= 1; i--) {
         foods.push({
-          x: 800 * Math.random(),
-          y: 400 * Math.random(),
+          x: _randomInteger(100, 600),
+          y: _randomInteger(100, 300),
         });
       }
 

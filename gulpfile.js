@@ -12,7 +12,7 @@ var bump      = require('gulp-bump');
 var args      = require('yargs').argv;
 var fs        = require('fs');
 var replace   = require('gulp-replace');
-var git       = require('gulp-git');
+// var git       = require('gulp-git');
 
 
 

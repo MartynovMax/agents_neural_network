@@ -15,6 +15,7 @@
     this.$grid       = undefined;
     this.$background = undefined;
     this.styles      = this.DEFAULT.styles;
+    this._loopInterval = undefined;
 
 
     /*
@@ -34,6 +35,7 @@
       this.render();
       this.renderData(inputData);
       this.setListeners();
+      this.loop();
     }.bind(this));
   }
 
@@ -49,6 +51,7 @@
     CACHE_TABLE_NAME: 'Canvas',
     width: 900,
     height: 500,
+    LOOP_INTERVAL: 50,
     styles: {
       background: '#fff',
       fill: {
@@ -69,14 +72,18 @@
 
 
   // public methods
-  _class.prototype.cx = cx;
-  _class.prototype.cy = cy;
+  _class.prototype.cx     = cx;
+  _class.prototype.cy     = cy;
+  _class.prototype.width  = width;
+  _class.prototype.height = height;
 
-  _class.prototype.width   = width;
-  _class.prototype.height  = height;
+  _class.prototype.render   = render;
+  _class.prototype.redraw   = redraw;
+  _class.prototype.loop     = loop;
+  _class.prototype.loopStop = loopStop;
 
-  _class.prototype.render       = render;
-  _class.prototype.redraw       = redraw;
+  _class.prototype.createFood = createFood;
+
   _class.prototype.destroy      = destroy;
   _class.prototype.setListeners = setListeners;
   _class.prototype.renderData   = renderData;
@@ -127,6 +134,38 @@
   }
 
 
+
+  function loop() {
+    var LOOP_MAX = Infinity;
+    // var LOOP_MAX = 1;
+    var loopCounter = 0;
+
+    this._loopInterval = setInterval(function(){
+      if (loopCounter >= LOOP_MAX) return this.loopStop();
+      if (LOOP_MAX !== Infinity) loopCounter++;
+
+      __updateAllInArray.call(this, 'Agent');
+      __updateAllInArray.call(this, 'Food');
+    }.bind(this), this.DEFAULT.LOOP_INTERVAL);
+  }
+
+
+
+  function __updateAllInArray(collectionName){
+    this.findCollection(collectionName)
+      .forEach(function(item) {
+        if (item) item.update();
+      });
+  }
+
+
+  function loopStop() {
+    if (!this._loopInterval) return undefined;
+    clearInterval(this._loopInterval);
+  }
+
+
+
   function renderData(data) {
     var _agents = data.agents
     var _foods  = data.foods
@@ -144,6 +183,15 @@
       return new Food(self, food.x, food.y);
     });
   }
+
+
+  function createFood() {
+    // return new Food(
+    //   this, 
+    //   _randomInteger(0, this.width()),
+    //   _randomInteger(0, this.height())
+    // );
+  } 
 
 
 

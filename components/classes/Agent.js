@@ -10,23 +10,21 @@
     this._x            = x;
     this._y            = y;
     this._speed        = speed || 0;
-    this._angle        = Math.round(Math.random() * 360);
-    this._loopInterval = undefined;
+    this._angle        = _randomInteger(0, 360);
     this.canvas        = canvas;
+    this.points        = 0;
     this.$element      = undefined;
     this.NeuralNetwork = new NeuralNetwork();
 
-    this.canvas.addEl(this);
-
     this.render();
-    this.loop();
+    this.canvas.addEl(this);
   }
 
 
   var _class = Agent;
 
   _class.prototype.DEFAULT = {
-    LOOP_INTERVAL: 50,
+    SPEED_MAX: 10,
     body: {
       size: 10,
       fill: '#999',
@@ -39,19 +37,25 @@
   };
 
 
-  _class.prototype.x = x;
-  _class.prototype.y = y;
-  _class.prototype.rx = rx;
-  _class.prototype.ry = ry;
-  _class.prototype.speed = speed;
-  _class.prototype.angle = angle;
-
-  _class.prototype.loop     = loop;
-  _class.prototype.loopStop = loopStop;
+  _class.prototype.x      = x;
+  _class.prototype.y      = y;
+  _class.prototype.width  = width;
+  _class.prototype.height = height;
+  _class.prototype.speed  = speed;
+  _class.prototype.angle  = angle;
 
   _class.prototype.render  = render;
+  _class.prototype.update  = update;
   _class.prototype.destroy = destroy;
   _class.prototype.move    = move;
+
+  _class.prototype.eat    = eat;
+  _class.prototype.incrementPoints = incrementPoints;
+
+  _class.prototype.normalizeData   = normalizeData;
+  _class.prototype.denormalizeData = denormalizeData;
+
+  _class.prototype.hasCollision = hasCollision;
 
   _class.prototype.distanceTo = distanceTo;
 
@@ -66,6 +70,7 @@
     }
   }
 
+
   function y(val) {
     if (val) {
       this._y = val;
@@ -75,17 +80,26 @@
     }
   }
 
-  function rx() {
-    return -Math.sin(this._angle);
+
+  function width() {
+    return this.$element.get(0).bbox().w;
   }
 
-  function ry() {
-    return Math.cos(this._angle);
+
+  function height() {
+    return this.$element.get(0).bbox().h;
   }
+
 
   function speed(val) {
     if (val) {
-      this._speed = val;
+      if (val > this.DEFAULT.SPEED_MAX) {
+        this._speed = this.DEFAULT.SPEED_MAX;
+      } else if (val < 0) {
+        this._speed = 0;
+      } else {
+        this._speed = val;
+      }
     } else {
       return this._speed;
     }
@@ -101,78 +115,81 @@
   }
 
 
-  function loop() {
-    var loopMax = 300;
-    var loopCounter = 0;
+  function update() {
+    var x           = this.x();
+    var y           = this.y();
+    var angle       = this.angle();
+    var nearFood    = this.canvas.getNearFood(x, y);
+    var angleToFood = 0;
 
-    this._loopInterval = setInterval(function(){
-      if (loopCounter >= loopMax) return this.loopStop();
-      loopCounter++;
 
-      var nearFood  = this.canvas.getNearFood(this.x(), this.y());
-      var pointSelf = new SVG.math.Point(this.x(), this.y());
-      var pointFood = new SVG.math.Point(nearFood.x(), nearFood.y());
-
+    if (this.hasCollision(nearFood)){
+      this.eat(nearFood);
+      nearFood = undefined;
+    } else if (nearFood) {
+      var pointSelf      = new SVG.math.Point(x, y);
+      var pointFood      = new SVG.math.Point(nearFood.x(), nearFood.y());
       var pointDirection = new SVG.math.Point(
-        this.x() + 20 * Math.sin( _toRadians(this.angle()) ),
-        this.y() - 20 * Math.cos( _toRadians(this.angle()) )
+        x + 20 * Math.sin( _toRadians(angle) ),
+        y - 20 * Math.cos( _toRadians(angle) )
       );
-
 
       var absAngleToFood = _toDegrees(SVG.math.angle(pointSelf, pointFood)) + 90;
       absAngleToFood = absAngleToFood >= 360 ? absAngleToFood - 360 : absAngleToFood;
 
-
       var absAngleDirection = _toDegrees(SVG.math.angle(pointSelf, pointDirection)) + 90;
       absAngleDirection = absAngleDirection >= 360 ? absAngleDirection - 360 : absAngleDirection;
 
-
-      var diff = Math.abs(absAngleToFood - absAngleDirection);
+      angleToFood = Math.abs(absAngleToFood - absAngleDirection);
       var sign = absAngleToFood > absAngleDirection ? 1 : -1;
 
-      if (diff > 180) {
-        diff = 180 - (diff - 180); 
+      if (angleToFood > 180) {
+        angleToFood = 180 - (angleToFood - 180); 
         sign = sign === -1 ? 1 : -1;
       }  
 
-      var angleToFood = diff * sign; 
-
-      var _cos  = Math.cos(_toRadians(angleToFood));
-      var _acos = _toDegrees(Math.acos(_cos));
-      // log('angleToFood', angleToFood, _cos, _acos)
-      // this.angle(this.angle() + (_acos * sign) );
-
-      var distanceToFood = this.distanceTo(nearFood);
-
-      // var result = this.NeuralNetwork.train({
-      //   angleToFood: _cos
-      // });
+      angleToFood *= sign;
+    }
 
 
-      var result = this.NeuralNetwork.activate({
-        angleToFood: _cos, 
-        distanceToFood: 0,
-      });
-      this.angle(this.angle() + (_toDegrees(Math.acos(result.angleToFood)) * sign) );
-      // this.speed(result[1]);
-      // this.move();
+    var rawData = {
+      isSeeFood      : !!nearFood,
+      angleToFood    : angleToFood,
+      distanceToFood : this.distanceTo(nearFood),
+    };
 
-      // log('result:\n' 
-        // , '\tangle:', result.angleToFood, _toDegrees(Math.acos(result.angleToFood)) * sign
-        // , '\n\tspeed:', result.distanceToFood
-      // )
+    var normalisedData   = this.normalizeData(rawData);
+    var result           = this.NeuralNetwork.activate(normalisedData);
+    var denormalisedData = this.denormalizeData(result);
 
-    }.bind(this), this.DEFAULT.LOOP_INTERVAL);
+    // log('\nrawData', rawData)
+    // log('normalisedData', normalisedData)
+    // log('result', result)
+    // log('denormalisedData', denormalisedData)
+
+    this.angle(angle + denormalisedData.angle);
+    this.speed(denormalisedData.speed);
+    this.move();
   }
 
 
 
+  function normalizeData(data){
+    if (data.distanceToFood === Infinity) data.distanceToFood = 0;
 
-  function loopStop() {
-    // log('loopStop', this.NeuralNetwork.toJSON())
+    return {
+      isSeeFood      : !!data.isSeeFood ? 1 : 0, 
+      angleToFood    : 1/360 * data.angleToFood, 
+      distanceToFood : data.distanceToFood === 0 ? 0 : 1 / data.distanceToFood, 
+    };
+  }
 
-    if (!this._loopInterval) return undefined;
-    clearInterval(this._loopInterval);
+
+  function denormalizeData(data){
+    return {
+      angle: data.angle / (1/360), 
+      speed: data.speed * this.DEFAULT.SPEED_MAX, 
+    };
   }
 
 
@@ -181,6 +198,7 @@
     var $element = $draw.group();
     var $body    = undefined;
     var $line    = undefined;
+    var $name    = undefined;
 
     $body = $element
       .circle()
@@ -196,6 +214,15 @@
       .height(this.DEFAULT.line.height)
       .fill(this.DEFAULT.line.fill);
 
+
+    $name = $element
+      .text(new String(this.points))
+      .x(5)
+      .y(-this.DEFAULT.line.height)
+      .width(this.DEFAULT.line.width)
+      .height(this.DEFAULT.line.height)
+      .fill(this.DEFAULT.line.fill);
+
     $element.x(this._x);
     $element.y(this._y);
     $element.get(1).rotate(this._angle, 0, 0);
@@ -205,11 +232,52 @@
 
 
   function destroy() {
+    this.$element.remove();
+    this.$element.fire(this.EVENTS.DESTROY);
+    this.canvas.removeEl(this);
+  }
 
+
+  function hasCollision(item) {
+    if (!item) return false;
+
+    var r1 = {
+      x : item.x(),
+      y : item.y(),
+      x2: item.x() + item.width(),
+      y2: item.y() + item.height(),
+    };
+
+    var r2 = {
+      x : this.x(),
+      y : this.y(),
+      x2: this.x() + this.width(),
+      y2: this.y() + this.height(),
+    };
+
+    return !(r2.x > r1.x2 || 
+             r2.x2 < r1.x || 
+             r2.y > r1.y2 ||
+             r2.y2 < r1.y);
+  }
+
+
+  function eat(item) {
+    if (!item) return undefined;
+    item.destroy();
+    this.speed(0);
+    this.incrementPoints();
+  }
+
+
+  function incrementPoints() {
+    this.points++;
+    this.$element.get(2).text(new String(this.points));
   }
 
 
   function distanceTo(item) {
+    if (!item) return 0;
     var pointSelf = new SVG.math.Point(this.x(), this.y());
     var pointItem = new SVG.math.Point(item.x(), item.y());
     return Math.sqrt(
