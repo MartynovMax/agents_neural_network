@@ -8,11 +8,20 @@ var concat    = require('gulp-concat');
 var uglify    = require('gulp-uglify');
 var size      = require('gulp-size');
 var minifyCSS = require('gulp-minify-css');
+var bump      = require('gulp-bump');
+var args      = require('yargs').argv;
+var fs        = require('fs');
+var replace   = require('gulp-replace');
+var git       = require('gulp-git');
+
 
 
 var PORT  = '8888';
 var PATHS = {
   INDEX: './index.html',
+  PACKAGES_CONFIGS: [
+    './package.json'
+  ],
   APP: [
     './components/helpers.js',
     './components/app.js',
@@ -62,7 +71,9 @@ var DEFAULT_TASKS = ['inject', 'connect', 'watch'];
 gulp.task('default', DEFAULT_TASKS);
 gulp.task('serve'  , DEFAULT_TASKS);
 gulp.task('start'  , DEFAULT_TASKS);
-gulp.task('build'  , task_build);
+gulp.task('bump'   , task_bump);
+gulp.task('bundle' , task_bundle);
+gulp.task('build'  , ['bump', 'bundle']);
 
 // launch local server
 gulp.task('connect', task_connect);
@@ -197,7 +208,7 @@ function task_inject() {
 
 
 
-function task_build() {
+function task_bundle() {
   var NAME_FILE_APP_JS           = 'app.temp.js';
   var NAME_FILE_APP_CSS          = 'app.temp.css';
   var NAME_FILE_DEPENDENCIES_JS  = 'dependencies.temp.js';
@@ -280,8 +291,69 @@ function task_build() {
         });
 
     });
-
 }
 
 
+
+function getPackageJson() {
+  return JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+}
+
+
+function task_bump() {
+    /// <summary>
+    /// It bumps revisions
+    /// Usage:
+    /// 1. gulp bump : bumps the package.json and bower.json to the next minor revision.
+    ///   i.e. from 0.1.1 to 0.1.2
+    /// 2. gulp bump --version 1.1.1 : bumps/sets the package.json and bower.json to the 
+    ///    specified revision.
+    /// 3. gulp bump --type major       : bumps 1.0.0 
+    ///    gulp bump --type minor       : bumps 0.1.0
+    ///    gulp bump --type patch       : bumps 0.0.2
+    ///    gulp bump --type prerelease  : bumps 0.0.1-2
+    /// </summary>
+
+    var type    = args.type;
+    var version = args.version;
+    var options = {};
+    
+    if (version) {
+      options.version = version;
+    } else {
+      options.type = type;
+    }
+
+    return gulp
+      .src(PATHS.PACKAGES_CONFIGS)
+      .pipe(bump(options))
+      .pipe(gulp.dest('./'))
+      .on('end', function() {
+        var pkg = getPackageJson();
+        setVersionAngularApp(pkg.version);
+
+        git.tag('v' + pkg.version, '', function (err) {
+          if (err) throw err;
+        });
+
+        setTimeout(function(){
+          console.log('App version: ' + pkg.version);
+        });
+      });
+}
+
+
+
+function setVersionAngularApp(version){
+  if (!version) return undefined;
+
+  gulp.src([PATHS.ANGULAR_APP])
+    .pipe(
+      replace(
+        /constant\(\s{0,}\'APP_VERSION\'\,\s{0,}.+\)/, 
+        "constant('APP_VERSION', '" + version + "')"
+      )
+    )
+    .pipe(gulp.dest('./components'));
+}
 
