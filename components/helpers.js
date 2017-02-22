@@ -9,6 +9,8 @@
   _window._toRadians     = _toRadians;
   _window._randomInteger = _randomInteger;
   _window.log            = _window.console.log.bind(_window.console);
+  _window._rotatePoint   = _rotatePoint;
+  _window._isPointInPoly = _isPointInPoly;
 
 
 
@@ -94,6 +96,33 @@
     rand = Math.round(rand);
     return rand;
   }
+
+
+  /*
+  * The first two parameters are the X and Y coordinates 
+  * of the central point (the origin around which the second point 
+  * will be rotated). The next two parameters are the coordinates 
+  * of the point that we'll be rotating. 
+  * The last parameter is the angle, in degrees.
+  */
+  function _rotatePoint(cx, cy, x, y, angle) {
+    var radians = (Math.PI / 180) * -angle,
+      cos = Math.cos(radians),
+      sin = Math.sin(radians),
+      nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
+      ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+    return new Point(nx, ny);
+  }
+
+
+  function _isPointInPoly(poly, pt){
+    for(var c = false, i = -1, l = poly.length, j = l - 1; ++i < l; j = i)
+      ((poly[i].y <= pt.y && pt.y < poly[j].y) || (poly[j].y <= pt.y && pt.y < poly[i].y))
+      && (pt.x < (poly[j].x - poly[i].x) * (pt.y - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x)
+      && (c = !c);
+    return c;
+  }
+  
 
 
 })(window);

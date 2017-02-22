@@ -7,13 +7,21 @@
     var self = this;
 
     this.id            = _generateID();
-    this._x            = x;
-    this._y            = y;
+    this._x            = x || 0;
+    this._y            = y || 0;
     this._speed        = speed || 0;
+    this._score        = 0;
+
+    // degrees
     this._angle        = _randomInteger(0, 360);
+
+    // degrees
+    this._visionAngle  = 110;
+    this._visionRadius = 220;
+    
     this.canvas        = canvas;
-    this.points        = 0;
     this.$element      = undefined;
+    this.$visionArea   = undefined;
     this.NeuralNetwork = new NeuralNetwork();
 
     this.render();
@@ -29,10 +37,25 @@
       size: 10,
       fill: '#999',
     },
-    line: {
+    name: {
       width: 3,
       height: 15,
-      fill: '#000',
+      fill: '#999',
+    },
+    vision: {
+      line: {
+        width: 3,
+        height: 15,
+        fill: '#353535',
+      },
+      area: {
+        width: 3,
+        height: 15,
+        fill: {
+          color: 'red',
+          opacity: 0.05,
+        },
+      },
     }
   };
 
@@ -49,13 +72,14 @@
   _class.prototype.destroy = destroy;
   _class.prototype.move    = move;
 
-  _class.prototype.eat    = eat;
+  _class.prototype.eat             = eat;
   _class.prototype.incrementPoints = incrementPoints;
 
   _class.prototype.normalizeData   = normalizeData;
   _class.prototype.denormalizeData = denormalizeData;
 
   _class.prototype.hasCollision    = hasCollision;
+  _class.prototype.getNearFood     = getNearFood;
   _class.prototype.isOutFromCanvas = isOutFromCanvas;
   _class.prototype.distanceTo      = distanceTo;
 
@@ -82,12 +106,12 @@
 
 
   function width() {
-    return this.$element.get(0).bbox().w;
+    return this.$element.get(1).bbox().w;
   }
 
 
   function height() {
-    return this.$element.get(0).bbox().h;
+    return this.$element.get(1).bbox().h;
   }
 
 
@@ -108,7 +132,7 @@
   function angle(val) {
     if (val) {
       this._angle = val;
-      this.$element.get(1).rotate(this._angle, 0, 0);
+      this.$element.get(0).rotate(this._angle, 0, 0);
     } else {
       return this._angle;
     }
@@ -119,9 +143,8 @@
     var x           = this.x();
     var y           = this.y();
     var angle       = this.angle();
-    var nearFood    = this.canvas.getNearFood(x, y);
+    var nearFood    = this.getNearFood();
     var angleToFood = 0;
-
 
     if (this.hasCollision(nearFood)){
       this.eat(nearFood);
@@ -174,6 +197,60 @@
 
 
 
+
+  function getNearFood() {
+    var x          = this.x();
+    var y          = this.y();
+    var angle      = this.angle();
+    var canvas     = this.canvas;
+    var collection = canvas.findCollection('Food');
+    var resultList = {};
+
+    var arcStart       = new Point(this.$visionArea._array.value[1][1], this.$visionArea._array.value[1][2]);
+    var arcEnd         = new Point(this.$visionArea._array.value[2][6], this.$visionArea._array.value[2][7]);
+    var chordLength    = Math.sqrt(Math.pow(Math.abs(arcStart.x - arcEnd.x), 2) + Math.pow(Math.abs(arcStart.y - arcEnd.y), 2));
+    var arcHeigth      = _getArcHeight(this._visionRadius * 2, chordLength)
+    var bottomTriangle = 2 * (this._visionRadius-arcHeigth) + Math.cos(_toRadians(this._visionAngle))
+
+    var areaPath = [];
+    areaPath[0]  = new Point(x, y);  
+    areaPath[1]  = new Point(x - bottomTriangle/2, y -this._visionRadius + arcHeigth);  
+    areaPath[2]  = new Point(x, y -this._visionRadius);  
+    areaPath[3]  = new Point(x + bottomTriangle/2, y -this._visionRadius + arcHeigth);  
+
+    areaPath = areaPath.map(function(_point){
+      return _rotatePoint(areaPath[0].x, areaPath[0].y, _point.x, _point.y, angle);
+    });
+
+
+    // var _drawArea = this.canvas.$element
+    //   .path()
+    //   .M(areaPath[0].x, areaPath[0].y)
+    //   .L(areaPath[1].x, areaPath[1].y)
+    //   .L(areaPath[2].x, areaPath[2].y)
+    //   .L(areaPath[3].x, areaPath[3].y)
+    //   .fill({
+    //     color: '#ccc',
+    //     opacity: 0.2
+    //   });
+
+    var objectsInArea = collection.filter(function(item) {
+      if (!item) return undefined;
+      var isInArea = _isPointInPoly(areaPath, new Point(item.x(), item.y()));
+
+      if (isInArea) {
+        var dist = Math.sqrt( Math.pow((x-item.x()), 2) + Math.pow((y-item.y()), 2) );
+        resultList[dist] = item;
+      }
+    });  
+
+    var minKey = Math.min.apply(Math, Object.keys(resultList));
+    return resultList[minKey] || null;
+  }
+
+
+
+
   function normalizeData(data){
     if (data.distanceToFood === Infinity) data.distanceToFood = 0;
 
@@ -194,11 +271,33 @@
 
 
   function render() {
-    var $draw    = this.canvas.$element;
-    var $element = $draw.group();
-    var $body    = undefined;
-    var $line    = undefined;
-    var $name    = undefined;
+    var $draw       = this.canvas.$element;
+    var $element    = $draw.group();
+    var $body       = undefined;
+    var $vision     = undefined;
+    var $visionLine = undefined;
+    var $visionArea = undefined;
+    var $name       = undefined;
+
+    $vision = $element.group();
+
+    $visionArea = $vision
+      .path(_createVisionArcPath(
+        0, 
+        0, 
+        this._visionRadius, 
+        360 - this._visionAngle / 2, 
+        this._visionAngle / 2 
+      ))
+      .fill(this.DEFAULT.vision.area.fill);
+
+    $visionLine = $vision
+      .rect()
+      .x(-(this.DEFAULT.vision.line.width / 2))
+      .y(-this.DEFAULT.vision.line.height)
+      .width(this.DEFAULT.vision.line.width)
+      .height(this.DEFAULT.vision.line.height)
+      .fill(this.DEFAULT.vision.line.fill);
 
     $body = $element
       .circle()
@@ -206,29 +305,59 @@
       .center(0, 0)
       .fill(this.DEFAULT.body.fill);
 
-    $line = $element
-      .rect()
-      .x(-(this.DEFAULT.line.width / 2))
-      .y(-this.DEFAULT.line.height)
-      .width(this.DEFAULT.line.width)
-      .height(this.DEFAULT.line.height)
-      .fill(this.DEFAULT.line.fill);
-
-
     $name = $element
-      .text(new String(this.points))
-      .x(5)
-      .y(-this.DEFAULT.line.height)
-      .width(this.DEFAULT.line.width)
-      .height(this.DEFAULT.line.height)
-      .fill(this.DEFAULT.line.fill);
+      .text(new String(this._score))
+      .x(this.DEFAULT.body.size*0.8)
+      .y(-this.DEFAULT.body.size*1.5)
+      .fill(this.DEFAULT.name.fill);
 
     $element.x(this._x);
     $element.y(this._y);
-    $element.get(1).rotate(this._angle, 0, 0);
+    $element.get(0).rotate(this._angle, 0, 0);
 
-    this.$element = $element;
+    this.$element    = $element;
+    this.$visionArea = $visionArea;
   }
+
+
+
+
+  function _createVisionArcPath(x, y, r, startAngle, endAngle, isPointsArray) {
+    startAngle += 90;
+    startAngle = _toRadians(startAngle);
+    endAngle   += 90;
+    endAngle   = _toRadians(endAngle);
+
+    if(startAngle > endAngle){
+      var s      = startAngle;
+      startAngle = endAngle;
+      endAngle   = s;
+    }
+    if (endAngle - startAngle > Math.PI*2 ) {
+      endAngle = Math.PI*1.99999;
+    }
+    
+    var largeArc = endAngle - startAngle <= Math.PI ? 0 : 1;
+
+
+    if (!isPointsArray) {
+      return ['M', x, y,
+              'L', x+Math.cos(startAngle)*r, y-(Math.sin(startAngle)*r), 
+              'A', r, r, 0, 0, 1, x+Math.cos(endAngle)*r, y-(Math.sin(endAngle)*r),
+              'L', x, y
+             ].join(' ');
+    } else {
+      return [
+              new Point(x, y),
+              new Point(x+Math.cos(startAngle)*r, y-(Math.sin(startAngle)*r)), 
+              new Point(x+Math.cos(endAngle)*r, y-(Math.sin(endAngle)*r)),
+              new Point(x, y)
+             ];
+    }
+  }
+
+
+
 
 
   function destroy() {
@@ -271,8 +400,8 @@
 
 
   function incrementPoints() {
-    this.points++;
-    this.$element.get(2).text(new String(this.points));
+    this._score++;
+    this.$element.get(2).text(new String(this._score));
   }
 
 

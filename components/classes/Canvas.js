@@ -35,7 +35,7 @@
       this.render();
       this.renderData(inputData);
       this.setListeners();
-      this.loop();
+      this.loopStart();
     }.bind(this));
   }
 
@@ -77,10 +77,10 @@
   _class.prototype.width  = width;
   _class.prototype.height = height;
 
-  _class.prototype.render   = render;
-  _class.prototype.redraw   = redraw;
-  _class.prototype.loop     = loop;
-  _class.prototype.loopStop = loopStop;
+  _class.prototype.render    = render;
+  _class.prototype.redraw    = redraw;
+  _class.prototype.loopStart = loopStart;
+  _class.prototype.loopStop  = loopStop;
 
   _class.prototype.createFood = createFood;
 
@@ -135,7 +135,7 @@
 
 
 
-  function loop() {
+  function loopStart() {
     var LOOP_MAX = Infinity;
     // var LOOP_MAX = 1;
     var loopCounter = 0;
@@ -422,7 +422,7 @@
   }
 
 
-
+  // TODO: not in use
   function getNearFood(x, y) {
     var collection = this.findCollection('Food');
     var resultList = {};
