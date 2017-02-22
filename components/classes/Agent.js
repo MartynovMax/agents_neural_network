@@ -55,9 +55,9 @@
   _class.prototype.normalizeData   = normalizeData;
   _class.prototype.denormalizeData = denormalizeData;
 
-  _class.prototype.hasCollision = hasCollision;
-
-  _class.prototype.distanceTo = distanceTo;
+  _class.prototype.hasCollision    = hasCollision;
+  _class.prototype.isOutFromCanvas = isOutFromCanvas;
+  _class.prototype.distanceTo      = distanceTo;
 
 
 
@@ -289,9 +289,44 @@
   function move() {
     var speed = this.speed(); 
     var angle = this.angle(); 
+    var x     = this._x + speed * Math.sin(_toRadians(angle));
+    var y     = this._y - speed * Math.cos(_toRadians(angle));
 
-    this.x(this._x + speed * Math.sin(_toRadians(angle)) );
-    this.y(this._y - speed * Math.cos(_toRadians(angle)) );
+    var isOutFromCanvas = this.isOutFromCanvas(x, y);
+
+    if (isOutFromCanvas) {
+      if (isOutFromCanvas === 'x') {
+        if (this.x() < x) {
+          x = this.width();
+        } else {
+          x = this.canvas.width() - this.width();
+        }
+      }
+      if (isOutFromCanvas === 'y') {
+        if (this.y() < y) {
+          y = this.height();
+        } else {
+          y = this.canvas.height() - this.height();
+        }
+      }
+    } 
+
+    this.x(x);
+    this.y(y);
+  }
+
+
+  function isOutFromCanvas(x, y) {
+    var width  = this.canvas.width();
+    var height = this.canvas.height();
+
+    if (x <= this.width()/2 || x >= width) {
+      return 'x';
+    }
+    if (y <= this.height()/2 || y >= height) {
+      return 'y';
+    }
+    return false;
   }
 
 

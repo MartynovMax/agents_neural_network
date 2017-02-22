@@ -34,8 +34,8 @@
 
 
     function init() {
-      var numberAgents = 1;
-      var numberFoods  = 1;
+      var numberAgents = 5;
+      var numberFoods  = 5;
       var agents = [];
       var foods  = [];
 

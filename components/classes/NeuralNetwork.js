@@ -60,7 +60,7 @@
       this.DEFAULT.LEARNING_RATE, 
       [
         dataObj.angleToFood,
-        0.5,
+        0.3,
       ]
     );
 

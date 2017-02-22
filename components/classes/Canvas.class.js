@@ -186,11 +186,11 @@
 
 
   function createFood() {
-    // return new Food(
-    //   this, 
-    //   _randomInteger(0, this.width()),
-    //   _randomInteger(0, this.height())
-    // );
+    return new Food(
+      this, 
+      _randomInteger(0, this.width()),
+      _randomInteger(0, this.height())
+    );
   } 
 
 

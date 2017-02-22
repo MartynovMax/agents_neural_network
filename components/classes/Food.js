@@ -28,7 +28,7 @@
     },
     line: {
       width: 3,
-      height: 15,
+      height: 13,
       fill: '#79aa41',
     }
   };
@@ -49,6 +49,8 @@
   _class.prototype.render  = render;
   _class.prototype.update  = update;
   _class.prototype.destroy = destroy;
+
+  _class.prototype.isOutFromCanvas = isOutFromCanvas;
 
 
 
@@ -112,9 +114,44 @@
   function move() {
     var speed = this.speed(); 
     var angle = this.angle(); 
+    var x     = this._x + speed * Math.sin(_toRadians(angle));
+    var y     = this._y - speed * Math.cos(_toRadians(angle));
 
-    this.x(this._x + speed * Math.sin(_toRadians(angle)) );
-    this.y(this._y - speed * Math.cos(_toRadians(angle)) );
+    var isOutFromCanvas = this.isOutFromCanvas(x, y);
+
+    if (isOutFromCanvas) {
+      if (isOutFromCanvas === 'x') {
+        if (this.x() < x) {
+          x = this.width();
+        } else {
+          x = this.canvas.width() - this.width();
+        }
+      }
+      if (isOutFromCanvas === 'y') {
+        if (this.y() < y) {
+          y = this.height();
+        } else {
+          y = this.canvas.height() - this.height();
+        }
+      }
+    } 
+
+    this.x(x);
+    this.y(y);
+  }
+
+
+  function isOutFromCanvas(x, y) {
+    var width  = this.canvas.width();
+    var height = this.canvas.height();
+
+    if (x <= this.width()/2 || x >= width) {
+      return 'x';
+    }
+    if (y <= this.height()/2 || y >= height) {
+      return 'y';
+    }
+    return false;
   }
 
 
@@ -140,27 +177,39 @@
       .height(this.DEFAULT.line.height)
       .fill(this.DEFAULT.line.fill);
 
+    $name = $element
+      .text('Hello world!');
+
+    if ($name) {
+      $name
+        .x(5)
+        .y(-this.DEFAULT.line.height - 5)
+        .width(this.DEFAULT.line.width)
+        .height(this.DEFAULT.line.height)
+        .fill(this.DEFAULT.line.fill);
+    }  
+
+    $element.x(this._x);
+    $element.y(this._y);
+    $element.get(1).rotate(this._angle, 0, 0);
+
+
     var words = [
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
       '',
       '',
       'A-a-a-a!',
       'No-no-no...',
       'Ha-ha!',
-      ':-P',
+      'O! Dollar!',
+      'Who is here?',
       'Bad day!',
     ];
-
-    $name = $element
-      .text(words[ _randomInteger(0, words.length) ])
-      .x(0)
-      .y(-this.DEFAULT.line.height - 5)
-      .width(this.DEFAULT.line.width)
-      .height(this.DEFAULT.line.height)
-      .fill(this.DEFAULT.line.fill);
-
-    $element.x(this._x);
-    $element.y(this._y);
-    $element.get(1).rotate(this._angle, 0, 0);
 
     var interval = setInterval(function(){
       if (!$name) return clearInterval(interval);
