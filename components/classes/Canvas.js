@@ -51,7 +51,7 @@
     CACHE_TABLE_NAME: 'Canvas',
     width: 900,
     height: 500,
-    LOOP_INTERVAL: 50,
+    LOOP_INTERVAL: 5,
     styles: {
       background: '#fff',
       fill: {
@@ -176,11 +176,11 @@
     var foods  = angular.copy(_foods);
 
     agents.map(function(agent) {
-      return new Agent(self, agent.x, agent.y);
+      return new Agent(self, agent.attrs, agent.params);
     });
 
     foods.map(function(food) {
-      return new Food(self, food.x, food.y);
+      return new Food(self, food.attrs, food.params);
     });
   }
 

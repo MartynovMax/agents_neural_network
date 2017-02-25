@@ -1,10 +1,13 @@
 (function(_window){
   'use strict';
 
+  _window._extendClass   = _extendClass;
   _window._eachSeries    = _eachSeries;
   _window._flatten       = _flatten;
   _window._getArcHeight  = _getArcHeight;
   _window._isObject      = _isObject;
+  _window._isBool        = _isBool;
+  _window._isNum         = _isNum;
   _window._toDegrees     = _toDegrees;
   _window._toRadians     = _toRadians;
   _window._randomInteger = _randomInteger;
@@ -13,6 +16,50 @@
   _window._isPointInPoly = _isPointInPoly;
 
 
+
+
+
+  function _extendClass(Child, Parent) {
+    Child.prototype = _extendObject(Child.prototype, Parent.prototype);
+    Child.prototype.constructor = Child;
+    Child.prototype.super = Parent;
+
+    // it is a right way, but it is not useful for me
+    // var F           = function() {};
+    // F.prototype     = Parent.prototype;
+    // Child.prototype = new F();
+    // Child.prototype.constructor = Child;
+    // Child.super     = Parent.prototype;
+
+
+    // var F           = function() {};
+    // F.prototype     = Parent.prototype;
+    // Child.prototype = new F();
+    // Child.prototype.constructor = Child;
+    // Child.super     = Parent.prototype;
+
+  }
+
+
+
+  function _extendObject(a, b) {
+    if (a == null || b == null) {
+      return a;
+    }
+
+    Object.keys(b).forEach(function (key) {
+      if (Object.prototype.toString.call(b[key]) == '[object Object]') {
+        if (Object.prototype.toString.call(a[key]) != '[object Object]') {
+          a[key] = b[key];
+        } else {
+          a[key] = extend(a[key], b[key]);
+        }
+      } else {
+        a[key] = b[key];
+      }
+    });
+    return a;
+  }
 
 
 
@@ -77,7 +124,17 @@
 
 
   function _isObject(item) {
-    return (typeof item === "object" && !Array.isArray(item) && item !== null);
+    return (typeof item === 'object' && !Array.isArray(item) && item !== null);
+  }
+
+
+  function _isNum(item) {
+    return typeof item === 'number';
+  }
+
+
+  function _isBool(item) {
+    return typeof item === 'boolean';
   }
 
 

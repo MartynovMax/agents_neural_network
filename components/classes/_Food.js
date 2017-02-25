@@ -1,27 +1,44 @@
 (function(_window){
   'use strict';
   _window.Food = Food;
+  _extendClass(Food, _window.Entity);
 
 
-  function Food(canvas, x, y, speed) {
+  function Food(_canvas, attrs, params) {
     var self = this;
+    this.super();
 
-    this.id       = _generateID();
-    this._x       = x;
-    this._y       = y;
-    this._speed   = speed || 5;
-    this._angle   = _randomInteger(0, 360);
-    this.canvas   = canvas;
+    if (!attrs) attrs = {};
+    if (!params) params = {};
+
+    this._canvas  = _canvas;
+    this._x       = attrs.x || 0;
+    this._y       = attrs.y || 0;
+    this._speed   = _isNum(attrs.speed) ? attrs.speed : this.DEFAULT.attrs.speed;
+    this._angle   = _isNum(attrs.angle) ? attrs.angle : this.DEFAULT.attrs.angle;
+
+    this._isAllowMove = _isBool(params.isAllowMove) ? params.isAllowMove : this.DEFAULT.params.isAllowMove;
+
     this.$element = undefined;
 
+
     this.render();
-    this.canvas.addEl(this);
+    this._canvas.addEl(this);
   }
 
 
   var _class = Food;
 
   _class.prototype.DEFAULT = {
+    attrs: {
+      speed        : 3,
+      angle        : _randomInteger(0, 360),
+      visionAngle  : 110,
+      visionRadius : 220,
+    },
+    params: {
+      isAllowMove: true,
+    },
     body: {
       size: 10,
       fill: '#79aa41',
@@ -37,15 +54,8 @@
     DESTROY: 'destroy',
   }
 
-  _class.prototype.x      = x;
-  _class.prototype.y      = y;
-  _class.prototype.width  = width;
-  _class.prototype.height = height;
-  _class.prototype.speed  = speed;
-  _class.prototype.angle  = angle;
 
-  _class.prototype.move  = move;
-
+  _class.prototype.move    = move;
   _class.prototype.render  = render;
   _class.prototype.update  = update;
   _class.prototype.destroy = destroy;
@@ -54,60 +64,13 @@
 
 
 
-  function x(val) {
-    if (val) {
-      this._x = val;
-      this.$element.x(this._x);
-    } else {
-      return this._x;
-    }
-  }
-
-
-  function y(val) {
-    if (val) {
-      this._y = val;
-      this.$element.y(this._y);
-    } else {
-      return this._y;
-    }
-  }
-
-
-  function width() {
-    return this.$element.get(0).bbox().w;
-  }
-
-
-  function height() {
-    return this.$element.get(0).bbox().h;
-  }
-
-
-  function speed(val) {
-    if (val) {
-      this._speed = val;
-    } else {
-      return this._speed;
-    }
-  }
-
-
-  function angle(val) {
-    if (val) {
-      this._angle = val;
-      this.$element.get(1).rotate(this._angle, 0, 0);
-    } else {
-      return this._angle;
-    }
-  }
-
-
   function update() {
-    this.angle(
-      this.angle() + (_randomInteger(-90, 90))
-    );
-    this.move();
+    if (this._isAllowMove) {
+      this.angle(
+        this.angle() + (_randomInteger(-20, 20))
+      );
+      this.move();
+    }
   }
 
 
@@ -124,14 +87,14 @@
         if (this.x() < x) {
           x = this.width();
         } else {
-          x = this.canvas.width() - this.width();
+          x = this._canvas.width() - this.width();
         }
       }
       if (isOutFromCanvas === 'y') {
         if (this.y() < y) {
           y = this.height();
         } else {
-          y = this.canvas.height() - this.height();
+          y = this._canvas.height() - this.height();
         }
       }
     } 
@@ -142,8 +105,8 @@
 
 
   function isOutFromCanvas(x, y) {
-    var width  = this.canvas.width();
-    var height = this.canvas.height();
+    var width  = this._canvas.width();
+    var height = this._canvas.height();
 
     if (x <= this.width()/2 || x >= width) {
       return 'x';
@@ -157,17 +120,11 @@
 
 
   function render() {
-    var $draw    = this.canvas.$element;
+    var $draw    = this._canvas.$element;
     var $element = $draw.group();
     var $body    = undefined;
     var $line    = undefined;
     var $name    = undefined;
-
-    $body = $element
-      .circle()
-      .radius(this.DEFAULT.body.size)
-      .center(0, 0)
-      .fill(this.DEFAULT.body.fill);
 
     $line = $element
       .rect()
@@ -176,6 +133,12 @@
       .width(this.DEFAULT.line.width)
       .height(this.DEFAULT.line.height)
       .fill(this.DEFAULT.line.fill);
+
+    $body = $element
+      .circle()
+      .radius(this.DEFAULT.body.size)
+      .center(0, 0)
+      .fill(this.DEFAULT.body.fill);
 
     $name = $element
       .text('Hello world!');
@@ -223,17 +186,10 @@
   function destroy() {
     this.$element.remove();
     this.$element.fire(this.EVENTS.DESTROY);
-    this.canvas.removeEl(this);
-    this.canvas.createFood();
+    this._canvas.removeEl(this);
+    this._canvas.createFood();
   }
 
-
-  function _generateID() {
-    function r() {
-      return Math.random().toString(36).substr(2, 4);
-    }
-    return r() + '-' + r() + '-' + r() + '-' + r();
-  }
 
 
 })(window);

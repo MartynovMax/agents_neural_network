@@ -28,28 +28,76 @@
     this.init = init;
     this.exampleTrain = exampleTrain;
 
+    
     this.init();
+
+
     // this.exampleTrain();
     return this;
 
 
     function init() {
-      var numberAgents = 5;
+      // _initOneAgent();
+      // _initMultipleAgents();
+    }
+
+
+
+    function _initOneAgent() {
+      var numberAgents = 1;
+      var numberFoods  = 1;
+      var agents = [];
+      var foods  = [];
+
+      agents.push({
+        attrs: {
+          x     : 100,
+          y     : 200,
+          angle : 90,
+          speed : 5,
+        }
+      });
+
+      foods.push({
+        attrs: {
+          x     : 600,
+          y     : 200,
+          angle : 90,
+          speed : 1,
+        },
+        params: {
+          isAllowMove: true,
+        }
+      });
+
+      new Canvas($element[0], {agents: agents, foods: foods}, 'edit');
+    }
+
+
+
+
+    function _initMultipleAgents() {
+      var numberAgents = 1;
       var numberFoods  = 5;
       var agents = [];
       var foods  = [];
 
       for (var i = numberAgents; i >= 1; i--) {
         agents.push({
-          x: _randomInteger(100, 600),
-          y: _randomInteger(100, 300),
+          attrs: {
+            x: _randomInteger(100, 600),
+            y: _randomInteger(100, 300),
+          }
         });
       }
 
       for (var i = numberFoods; i >= 1; i--) {
         foods.push({
-          x: _randomInteger(100, 600),
-          y: _randomInteger(100, 300),
+          attrs: {
+            x: _randomInteger(100, 600),
+            y: _randomInteger(100, 300),
+            speed: 1
+          }
         });
       }
 

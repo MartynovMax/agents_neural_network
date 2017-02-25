@@ -1,31 +1,32 @@
 (function(_window){
   'use strict';
   _window.Agent = Agent;
+  _extendClass(Agent, _window.Entity);
 
 
-  function Agent(canvas, x, y, speed) {
+  function Agent(_canvas, attrs, params) {
     var self = this;
+    this.super();
 
-    this.id            = _generateID();
-    this._x            = x || 0;
-    this._y            = y || 0;
-    this._speed        = speed || 0;
+    if (!attrs) attrs = {};
+    if (!params) params = {};
+
+    this._canvas       = _canvas;
+    this._x            = attrs.x || 0;
+    this._y            = attrs.y || 0;
+    this._speed        = _isNum(attrs.speed) ? attrs.speed : this.DEFAULT.params.speed;
     this._score        = 0;
-
-    // degrees
-    this._angle        = _randomInteger(0, 360);
-
-    // degrees
-    this._visionAngle  = 110;
-    this._visionRadius = 220;
+    this._angle        = _isNum(attrs.angle) ? attrs.angle : this.DEFAULT.attrs.angle;
+    this._visionAngle  = _isNum(attrs.visionAngle) ? attrs.visionAngle : this.DEFAULT.attrs.visionAngle;
+    this._visionRadius = _isNum(attrs.visionRadius) ? attrs.visionRadius : this.DEFAULT.attrs.visionRadius;
     
-    this.canvas        = canvas;
     this.$element      = undefined;
     this.$visionArea   = undefined;
-    this.NeuralNetwork = new NeuralNetwork();
+    this.brain         = new NeuralNetwork();
+
 
     this.render();
-    this.canvas.addEl(this);
+    this._canvas.addEl(this);
   }
 
 
@@ -33,6 +34,13 @@
 
   _class.prototype.DEFAULT = {
     SPEED_MAX: 10,
+    attrs: {
+      speed        : 0,
+      angle        : _randomInteger(0, 360),
+      visionAngle  : 110,
+      visionRadius : 220,
+    },
+    params: {},
     body: {
       size: 10,
       fill: '#999',
@@ -60,12 +68,11 @@
   };
 
 
-  _class.prototype.x      = x;
-  _class.prototype.y      = y;
-  _class.prototype.width  = width;
-  _class.prototype.height = height;
-  _class.prototype.speed  = speed;
-  _class.prototype.angle  = angle;
+  _class.prototype.EVENTS = {
+    DESTROY: 'destroy',
+  }
+
+
 
   _class.prototype.render  = render;
   _class.prototype.update  = update;
@@ -84,59 +91,6 @@
   _class.prototype.distanceTo      = distanceTo;
 
 
-
-  function x(val) {
-    if (val) {
-      this._x = val;
-      this.$element.x(this._x);
-    } else {
-      return this._x;
-    }
-  }
-
-
-  function y(val) {
-    if (val) {
-      this._y = val;
-      this.$element.y(this._y);
-    } else {
-      return this._y;
-    }
-  }
-
-
-  function width() {
-    return this.$element.get(1).bbox().w;
-  }
-
-
-  function height() {
-    return this.$element.get(1).bbox().h;
-  }
-
-
-  function speed(val) {
-    if (val) {
-      if (val > this.DEFAULT.SPEED_MAX) {
-        this._speed = this.DEFAULT.SPEED_MAX;
-      } else if (val < 0) {
-        this._speed = 0;
-      } else {
-        this._speed = val;
-      }
-    } else {
-      return this._speed;
-    }
-  }
-
-  function angle(val) {
-    if (val) {
-      this._angle = val;
-      this.$element.get(0).rotate(this._angle, 0, 0);
-    } else {
-      return this._angle;
-    }
-  }
 
 
   function update() {
@@ -182,7 +136,7 @@
     };
 
     var normalisedData   = this.normalizeData(rawData);
-    var result           = this.NeuralNetwork.activate(normalisedData);
+    var result           = this.brain.activate(normalisedData);
     var denormalisedData = this.denormalizeData(result);
 
     // log('\nrawData', rawData)
@@ -202,7 +156,7 @@
     var x          = this.x();
     var y          = this.y();
     var angle      = this.angle();
-    var canvas     = this.canvas;
+    var canvas     = this._canvas;
     var collection = canvas.findCollection('Food');
     var resultList = {};
 
@@ -271,7 +225,7 @@
 
 
   function render() {
-    var $draw       = this.canvas.$element;
+    var $draw       = this._canvas.$element;
     var $element    = $draw.group();
     var $body       = undefined;
     var $vision     = undefined;
@@ -363,7 +317,24 @@
   function destroy() {
     this.$element.remove();
     this.$element.fire(this.EVENTS.DESTROY);
-    this.canvas.removeEl(this);
+    this._canvas.removeEl(this);
+  }
+
+
+  function eventFire(event) {
+    if (!event) return undefined;
+    return this.$element.fire(event);
+  }
+
+
+  function eventOn(event) {
+    if (!event) return undefined;
+    return this.$element.on(event);
+  }
+
+
+  function eventOff(event) {
+    return this.$element.off(event);
   }
 
 
@@ -428,14 +399,14 @@
         if (this.x() < x) {
           x = this.width();
         } else {
-          x = this.canvas.width() - this.width();
+          x = this._canvas.width() - this.width();
         }
       }
       if (isOutFromCanvas === 'y') {
         if (this.y() < y) {
           y = this.height();
         } else {
-          y = this.canvas.height() - this.height();
+          y = this._canvas.height() - this.height();
         }
       }
     } 
@@ -446,8 +417,8 @@
 
 
   function isOutFromCanvas(x, y) {
-    var width  = this.canvas.width();
-    var height = this.canvas.height();
+    var width  = this._canvas.width();
+    var height = this._canvas.height();
 
     if (x <= this.width()/2 || x >= width) {
       return 'x';
@@ -458,14 +429,6 @@
     return false;
   }
 
-
-
-  function _generateID() {
-    function r() {
-      return Math.random().toString(36).substr(2, 4);
-    }
-    return r() + '-' + r() + '-' + r() + '-' + r();
-  }
 
 
 })(window);
