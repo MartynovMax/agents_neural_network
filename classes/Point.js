@@ -1,6 +1,5 @@
-(function(_window){
+define(function (require) {
   'use strict';
-  _window.Point = Point;
 
   // constructor
   function Point(x, y) {
@@ -8,4 +7,5 @@
     this.y = y || 0;
   }
 
-})(window);
+  return Point;
+});

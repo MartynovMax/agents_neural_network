@@ -32,10 +32,7 @@ var PATHS = {
     './components/*.js',
     './components/*/*.js',
     './components/*/*/*.js',
-  ],
-  CLASSES: [
-    './components/classes/*.js',
-    './components/classes/*/*.js',
+    './classes/main.js',
   ],
   CSS: [
     './components/*.css',
@@ -56,6 +53,7 @@ var PATHS = {
       'components/vendor/svg.math.js/svg.math.min.js',
       'components/vendor/svg.foreignobject.js/svg.foreignobject.js',
       'components/vendor/line-circle-collision/index.js',
+      'components/vendor/requirejs/require.js',
     ],
     CSS: [
       'node_modules/svg.select.js/dist/svg.min.css',

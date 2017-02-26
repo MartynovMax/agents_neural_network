@@ -1,20 +1,21 @@
-(function(_window){
+define(function (require) {
   'use strict';
-  _window.Canvas = Canvas;
 
+  var Agent = require('Agent');
+  var Food  = require('Food');
 
   function Canvas($parentEl, inputData) {
     var self = this;
 
     // Public properties, assigned to the instance ('this')
-    this.HTML_ID     = this.DEFAULT.HTML_ID;
-    this.$parentEl   = $parentEl;
-    this.$element    = undefined;
-    this.$body       = undefined;
-    this.$bodyRect   = undefined;
-    this.$grid       = undefined;
-    this.$background = undefined;
-    this.styles      = this.DEFAULT.styles;
+    this.HTML_ID       = this.DEFAULT.HTML_ID;
+    this.$parentEl     = $parentEl;
+    this.$element      = undefined;
+    this.$body         = undefined;
+    this.$bodyRect     = undefined;
+    this.$grid         = undefined;
+    this.$background   = undefined;
+    this.styles        = this.DEFAULT.styles;
     this._loopInterval = undefined;
 
 
@@ -51,7 +52,7 @@
     CACHE_TABLE_NAME: 'Canvas',
     width: 900,
     height: 500,
-    LOOP_INTERVAL: 5,
+    LOOP_INTERVAL: 50,
     styles: {
       background: '#fff',
       fill: {
@@ -99,6 +100,9 @@
   _class.prototype.generateInstanceIDByDetails = generateInstanceIDByDetails;
 
   _class.prototype.isInsideBody = isInsideBody;
+
+  return _class;
+
 
 
 
@@ -477,4 +481,4 @@
     log('Canvas.destroy')
   }
 
-})(window);
+});

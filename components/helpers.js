@@ -168,7 +168,7 @@
       sin = Math.sin(radians),
       nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
       ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
-    return new Point(nx, ny);
+    return {x: nx, y: ny};
   }
 
 

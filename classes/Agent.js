@@ -1,7 +1,11 @@
-(function(_window){
+define(function (require) {
   'use strict';
-  _window.Agent = Agent;
-  _extendClass(Agent, _window.Entity);
+
+  var Point  = require('Point');
+  var Entity = require('Entity');
+  var NeuralNetwork = require('NeuralNetwork');
+
+  _extendClass(Agent, Entity);
 
 
   function Agent(_canvas, attrs, params) {
@@ -89,6 +93,9 @@
   _class.prototype.getNearFood     = getNearFood;
   _class.prototype.isOutFromCanvas = isOutFromCanvas;
   _class.prototype.distanceTo      = distanceTo;
+
+  return _class;
+
 
 
 
@@ -431,4 +438,4 @@
 
 
 
-})(window);
+});

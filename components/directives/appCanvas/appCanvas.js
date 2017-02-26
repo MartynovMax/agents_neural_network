@@ -24,9 +24,11 @@
   AppCanvasCtrl.$inject = ['$scope', '$element'];
 
   function AppCanvasCtrl($scope, $element) {
+    var self = this;
 
     this.init = init;
     this.exampleTrain = exampleTrain;
+    this.createCanvas = createCanvas;
 
     
     this.init();
@@ -37,8 +39,15 @@
 
 
     function init() {
-      // _initOneAgent();
+      _initOneAgent();
       // _initMultipleAgents();
+    }
+
+
+    function createCanvas(data) {
+      requirejs(["Canvas"], function(Canvas) {
+        new Canvas($element[0], data, 'edit');
+      });
     }
 
 
@@ -70,7 +79,7 @@
         }
       });
 
-      new Canvas($element[0], {agents: agents, foods: foods}, 'edit');
+      self.createCanvas({agents: agents, foods: foods});
     }
 
 
@@ -101,7 +110,7 @@
         });
       }
 
-      new Canvas($element[0], {agents: agents, foods: foods}, 'edit');
+      self.createCanvas({agents: agents, foods: foods});
     }
 
 

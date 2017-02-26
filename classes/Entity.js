@@ -1,7 +1,5 @@
-(function(_window){
+define(function (require) {
   'use strict';
-  _window.Entity = Entity;
-
 
   function Entity() {
     var self = this;
@@ -30,6 +28,9 @@
   _class.prototype.isOutFromCanvas  = isOutFromCanvas;
   _class.prototype.getDistanceTo    = getDistanceTo;
   _class.prototype.generateID       = generateID;
+
+  return _class;
+
 
 
 
@@ -161,4 +162,4 @@
     return r() + '-' + r() + '-' + r() + '-' + r();
   }
 
-})(window);
+});

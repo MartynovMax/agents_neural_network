@@ -1,7 +1,10 @@
-(function(_window){
+define(function (require) {
   'use strict';
-  _window.Food = Food;
-  _extendClass(Food, _window.Entity);
+
+  var Entity = require('Entity');
+  var Agent  = require('Agent');
+    
+  _extendClass(Food, Entity);
 
 
   function Food(_canvas, attrs, params) {
@@ -61,6 +64,8 @@
   _class.prototype.destroy = destroy;
 
   _class.prototype.isOutFromCanvas = isOutFromCanvas;
+
+  return _class;
 
 
 
@@ -192,4 +197,4 @@
 
 
 
-})(window);
+});
