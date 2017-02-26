@@ -4,6 +4,7 @@ define(function (require) {
   var Agent = require('Agent');
   var Food  = require('Food');
 
+  // constructor
   function Canvas($parentEl, inputData) {
     var self = this;
 
@@ -180,7 +181,7 @@ define(function (require) {
     var foods  = angular.copy(_foods);
 
     agents.map(function(agent) {
-      return new Agent(self, agent.attrs, agent.params);
+      return new Agent(self, agent.attrs, agent.params, agent.brain);
     });
 
     foods.map(function(food) {

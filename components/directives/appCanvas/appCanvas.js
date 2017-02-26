@@ -39,7 +39,7 @@
 
 
     function init() {
-      _initOneAgent();
+      // _initOneAgent();
       // _initMultipleAgents();
     }
 
@@ -53,33 +53,36 @@
 
 
     function _initOneAgent() {
-      var numberAgents = 1;
-      var numberFoods  = 1;
-      var agents = [];
-      var foods  = [];
+      requirejs(["nn/NeuralNetwork"], function(NeuralNetwork) {
+        var numberAgents = 1;
+        var numberFoods  = 1;
+        var agents = [];
+        var foods  = [];
 
-      agents.push({
-        attrs: {
-          x     : 100,
-          y     : 200,
-          angle : 90,
-          speed : 5,
-        }
+        agents.push({
+          attrs: {
+            x     : 100,
+            y     : 200,
+            angle : 90,
+            speed : 0,
+          },
+          brain: new NeuralNetwork()
+        });
+
+        foods.push({
+          attrs: {
+            x     : 200,
+            y     : 200,
+            angle : 90,
+            speed : 1,
+          },
+          params: {
+            isAllowMove: true,
+          }
+        });
+
+        self.createCanvas({agents: agents, foods: foods});
       });
-
-      foods.push({
-        attrs: {
-          x     : 600,
-          y     : 200,
-          angle : 90,
-          speed : 1,
-        },
-        params: {
-          isAllowMove: true,
-        }
-      });
-
-      self.createCanvas({agents: agents, foods: foods});
     }
 
 

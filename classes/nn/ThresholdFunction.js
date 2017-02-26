@@ -7,7 +7,7 @@ define(function (require) {
 
   ThresholdFunction.SIGN = {
     calculate: function(value, params) {
-      var threshold = params.get(0);
+      var threshold = params[0];
       if (value > threshold) {
         return 1;
       } else {

@@ -1,14 +1,14 @@
 define(function (require) {
   'use strict';
 
+  // var NeuralNetwork = require('nn/NeuralNetwork');
   var Point  = require('Point');
   var Entity = require('Entity');
-  var NeuralNetwork = require('NeuralNetwork');
 
   _extendClass(Agent, Entity);
 
 
-  function Agent(_canvas, attrs, params) {
+  function Agent(_canvas, attrs, params, brain) {
     var self = this;
     this.super();
 
@@ -26,8 +26,11 @@ define(function (require) {
     
     this.$element      = undefined;
     this.$visionArea   = undefined;
-    this.brain         = new NeuralNetwork();
+    this.brain         = undefined;
 
+    if (brain) {
+      this.setBrain(brain);
+    }
 
     this.render();
     this._canvas.addEl(this);
@@ -37,7 +40,7 @@ define(function (require) {
   var _class = Agent;
 
   _class.prototype.DEFAULT = {
-    SPEED_MAX: 10,
+    SPEED_MAX: 5,
     attrs: {
       speed        : 0,
       angle        : _randomInteger(0, 360),
@@ -88,6 +91,9 @@ define(function (require) {
 
   _class.prototype.normalizeData   = normalizeData;
   _class.prototype.denormalizeData = denormalizeData;
+  _class.prototype.activateBrain   = activateBrain;
+  _class.prototype.getBrainSignal  = getBrainSignal;
+  _class.prototype.setBrain        = setBrain;
 
   _class.prototype.hasCollision    = hasCollision;
   _class.prototype.getNearFood     = getNearFood;
@@ -143,8 +149,11 @@ define(function (require) {
     };
 
     var normalisedData   = this.normalizeData(rawData);
-    var result           = this.brain.activate(normalisedData);
+    this.activateBrain(normalisedData);
+    var result = this.getBrainSignal();
     var denormalisedData = this.denormalizeData(result);
+
+    log('denormalisedData', result)
 
     // log('\nrawData', rawData)
     // log('normalisedData', normalisedData)
@@ -152,10 +161,34 @@ define(function (require) {
     // log('denormalisedData', denormalisedData)
 
     this.angle(angle + denormalisedData.angle);
-    this.speed(denormalisedData.speed);
+    // this.speed(0);
+    // this.speed(denormalisedData.speed);
     this.move();
   }
 
+
+  // TODO: validate me
+  function activateBrain(dataObj) {
+    this.brain.putSignalToNeuron(0, dataObj.isSeeFood);
+    this.brain.putSignalToNeuron(1, dataObj.angleToFood);
+    this.brain.putSignalToNeuron(2, dataObj.distanceToFood);
+    this.brain.activate();
+  }
+
+
+
+  function getBrainSignal() {
+    return {
+      angle: this.brain.getAfterActivationSignal(0), 
+      speed: this.brain.getAfterActivationSignal(1),
+    };
+  }
+
+
+  
+  function setBrain(neuralNetwork){
+    this.brain = neuralNetwork;
+  }
 
 
 
@@ -167,29 +200,31 @@ define(function (require) {
     var collection = canvas.findCollection('Food');
     var resultList = {};
 
-    var arcStart       = new Point(this.$visionArea._array.value[1][1], this.$visionArea._array.value[1][2]);
-    var arcEnd         = new Point(this.$visionArea._array.value[2][6], this.$visionArea._array.value[2][7]);
-    var chordLength    = Math.sqrt(Math.pow(Math.abs(arcStart.x - arcEnd.x), 2) + Math.pow(Math.abs(arcStart.y - arcEnd.y), 2));
-    var arcHeigth      = _getArcHeight(this._visionRadius * 2, chordLength)
-    var bottomTriangle = 2 * (this._visionRadius-arcHeigth) + Math.cos(_toRadians(this._visionAngle))
+    var pointArcStart = new Point(x + this.$visionArea._array.value[1][1], y + this.$visionArea._array.value[1][2]);
+    var pointMiddle   = new Point(x, y -this._visionRadius);
+    var pointArcEnd   = new Point(x + this.$visionArea._array.value[2][6], y + this.$visionArea._array.value[2][7]);
 
     var areaPath = [];
     areaPath[0]  = new Point(x, y);  
-    areaPath[1]  = new Point(x - bottomTriangle/2, y -this._visionRadius + arcHeigth);  
-    areaPath[2]  = new Point(x, y -this._visionRadius);  
-    areaPath[3]  = new Point(x + bottomTriangle/2, y -this._visionRadius + arcHeigth);  
+    areaPath[1]  = pointArcStart;  
+    areaPath[2]  = _rotatePoint(x, y, pointMiddle.x, pointMiddle.y, -(this._visionAngle/4));  
+    areaPath[3]  = pointMiddle;  
+    areaPath[4]  = _rotatePoint(x, y, pointMiddle.x, pointMiddle.y, (this._visionAngle/4));
+    areaPath[5]  = pointArcEnd;  
 
     areaPath = areaPath.map(function(_point){
       return _rotatePoint(areaPath[0].x, areaPath[0].y, _point.x, _point.y, angle);
     });
 
 
-    // var _drawArea = this.canvas.$element
+    // var _drawArea = this._canvas.$element
     //   .path()
     //   .M(areaPath[0].x, areaPath[0].y)
     //   .L(areaPath[1].x, areaPath[1].y)
     //   .L(areaPath[2].x, areaPath[2].y)
     //   .L(areaPath[3].x, areaPath[3].y)
+    //   .L(areaPath[4].x, areaPath[4].y)
+    //   .L(areaPath[5].x, areaPath[5].y)
     //   .fill({
     //     color: '#ccc',
     //     opacity: 0.2
@@ -210,8 +245,7 @@ define(function (require) {
   }
 
 
-
-
+  
   function normalizeData(data){
     if (data.distanceToFood === Infinity) data.distanceToFood = 0;
 
@@ -223,12 +257,14 @@ define(function (require) {
   }
 
 
+  
   function denormalizeData(data){
     return {
       angle: data.angle / (1/360), 
       speed: data.speed * this.DEFAULT.SPEED_MAX, 
     };
   }
+
 
 
   function render() {
@@ -282,7 +318,6 @@ define(function (require) {
 
 
 
-
   function _createVisionArcPath(x, y, r, startAngle, endAngle, isPointsArray) {
     startAngle += 90;
     startAngle = _toRadians(startAngle);
@@ -316,8 +351,6 @@ define(function (require) {
              ];
     }
   }
-
-
 
 
 

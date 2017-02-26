@@ -35,7 +35,7 @@ define(function (require) {
 
 
   function x(val) {
-    if (val) {
+    if (_isNum(val)) {
       this._x = val;
       this.$element.x(this._x);
     } else {
@@ -45,7 +45,7 @@ define(function (require) {
 
 
   function y(val) {
-    if (val) {
+    if (_isNum(val)) {
       this._y = val;
       this.$element.y(this._y);
     } else {
@@ -65,7 +65,7 @@ define(function (require) {
 
 
   function speed(val) {
-    if (val) {
+    if (_isNum(val)) {
       if (val > this.DEFAULT.SPEED_MAX) {
         this._speed = this.DEFAULT.SPEED_MAX;
       } else if (val < 0) {

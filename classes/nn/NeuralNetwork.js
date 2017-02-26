@@ -1,17 +1,17 @@
 define(function (require) {
   'use strict';
 
-  var ThresholdFunction = require('ThresholdFunction');
-  var Links             = require('Links');
-  var Neuron            = require('Neuron');
+  var ThresholdFunction = require('nn/ThresholdFunction');
+  var Links             = require('nn/Links');
+  var Neuron            = require('nn/Neuron');
 
-
+  // constructor
   function NeuralNetwork() {
     var self = this;
 
-    this.perceptron = undefined;
-    this.neurons    = [];
-    // this.neuronsLinks = new Links();
+    this.perceptron           = undefined;
+    this.neurons              = [];
+    this.neuronsLinks         = new Links();
     this.activationIterations = 1;
 
     this.createPerceptron();
@@ -25,11 +25,12 @@ define(function (require) {
   };
 
 
-  _class.prototype.createPerceptron = createPerceptron;
-  _class.prototype.getNeuronsCount  = getNeuronsCount;
-  // _class.prototype.activateNeuralNetwork  = activateNeuralNetwork;
-  _class.prototype.activate = activate; 
-  _class.prototype.toJSON   = toJSON;
+  _class.prototype.createPerceptron         = createPerceptron;
+  _class.prototype.getNeuronsCount          = getNeuronsCount;
+  _class.prototype.putSignalToNeuron        = putSignalToNeuron;
+  _class.prototype.getAfterActivationSignal = getAfterActivationSignal;
+  _class.prototype.activate                 = activate;
+  _class.prototype.toJSON                   = toJSON;
 
   return _class;
 
@@ -41,15 +42,12 @@ define(function (require) {
 
     for (var i = 0; i < numberOfNeurons; i++) {
       this.neurons.push(
-        new synaptic.Neuron(ThresholdFunction.SIGN, ThresholdFunction.SIGN.getDefaultParams())
+        new Neuron(ThresholdFunction.SIGN, ThresholdFunction.SIGN.getDefaultParams())
       );
     }
   }
 
 
-  // int neuronsCount = this.brain.getNeuronsCount();
-  // double deltaAngle = this.brain.getAfterActivationSignal(neuronsCount - 2);
-  // double deltaSpeed = this.brain.getAfterActivationSignal(neuronsCount - 1);
 
 
   function activate() {
@@ -59,14 +57,18 @@ define(function (require) {
         activator.activate();
         var activatorSignal = activator.getAfterActivationSignal();
 
-        var receiverNum = this.neuronsLinks.getReceivers(i);
-        if (receiverNum >= this.neurons.length) {
-          throw new Error("Neural network has " + this.neurons.length
-              + " neurons. But there was trying to accsess neuron with index " + receiverNum);
+        var receivers = this.neuronsLinks.getReceivers(i);
+
+        for (var r=0; r < receivers.length; r++) {
+          if (r >= this.neurons.length) {
+            throw new Error("Neural network has " + this.neurons.length
+                + " neurons. But there was trying to accsess neuron with index " + r);
+          }
+
+          var receiver = this.neurons[r];
+          var weight   = this.neuronsLinks.getWeight(i, r);
+          receiver.addSignal(activatorSignal * weight);
         }
-        var receiver = this.neurons[receiverNum];
-        var weight   = this.neuronsLinks.getWeight(i, receiverNum);
-        receiver.addSignal(activatorSignal * weight);
       }
     }
   }
@@ -76,15 +78,6 @@ define(function (require) {
   function getNeuronsCount() {
     return this.neurons.length;
   }
-
-
-  // it should be in Agent
-  // function activateNeuralNetwork(nnInputs) {
-  //   for (var i = 0; i < nnInputs.length; i++) {
-  //     this.brain.putSignalToNeuron(i, nnInputs.get(i));
-  //   }
-  //   this.brain.activate();
-  // }
 
 
   function putSignalToNeuron(neuronIndx, signalValue) {
@@ -151,7 +144,7 @@ define(function (require) {
   // }
 
 
-
+  // TODO: correct me
   function toJSON() {
     log(JSON.stringify(this.perceptron.toJSON()) )
     return this.perceptron.toJSON();

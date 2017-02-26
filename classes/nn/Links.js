@@ -10,7 +10,7 @@ define(function (require) {
   var _class = Links;
 
   _class.prototype.getReceivers  = getReceivers;
-  // _class.prototype.getWeight     = getWeight;
+  _class.prototype.getWeight     = getWeight;
   // _class.prototype.addWeight     = addWeight;
   // _class.prototype.getAllWeights = getAllWeights;
   // _class.prototype.setAllWeights = setAllWeights;
@@ -34,6 +34,8 @@ define(function (require) {
   function getWeight(activatorNeuronNumber, receiverNeuronNumber) {
     var weight = 0;
 
+    log('activatorNeuronNumber, receiverNeuronNumber',this.links,  activatorNeuronNumber, receiverNeuronNumber)
+
     if (this.links[activatorNeuronNumber]) {
       var receiverNumToWeight = this.links[activatorNeuronNumber];
 
@@ -43,7 +45,8 @@ define(function (require) {
         throw new Error('getWeight 1');
       }
     } else {
-      throw new Error('getWeight 2');
+      // throw new Error('getWeight 2');
+      console.error('getWeight 2')
     }
     return weight;
   }
