@@ -86,6 +86,7 @@ define(function (require) {
   _class.prototype.loopStop  = loopStop;
 
   _class.prototype.createFood = createFood;
+  _class.prototype.getGroups  = getGroups;
 
   _class.prototype.destroy      = destroy;
   _class.prototype.setListeners = setListeners;
@@ -102,6 +103,9 @@ define(function (require) {
   _class.prototype.generateInstanceIDByDetails = generateInstanceIDByDetails;
 
   _class.prototype.isInsideBody = isInsideBody;
+
+  _class.prototype.export      = _export;
+  _class.prototype.export_json = export_json;
 
   return _class;
 
@@ -174,10 +178,16 @@ define(function (require) {
 
   function renderData(data) {
     var self = this;
+    var padding = 50;
 
     if (data.agents) {
       var agents = angular.copy(data.agents);
       agents.map(function(agent) {
+        if (!agent.attrs || !agent.attrs.x && !agent.attrs.y) {
+          if (!agent.attrs) agent.attrs = {};
+          agent.attrs.x = _randomInteger(padding, self.width() - padding);
+          agent.attrs.y = _randomInteger(padding, self.height() - padding);
+        }
         return new Agent(self, agent.attrs, agent.params, agent.brain);
       });
     }
@@ -185,6 +195,10 @@ define(function (require) {
     if (data.foods) {
       var foods  = angular.copy(data.foods);
       foods.map(function(food) {
+        if (!food.attrs || !food.attrs.x && !food.attrs.y) {
+          food.attrs.x = _randomInteger(padding, self.width() - padding);
+          food.attrs.y = _randomInteger(padding, self.height() - padding);
+        }
         return new Food(self, food.attrs, food.params);
       });
     }
@@ -196,6 +210,11 @@ define(function (require) {
         var _group = new Group(self);
 
         group.agents.forEach(function(agent) {
+          if (!agent.attrs || !agent.attrs.x && !agent.attrs.y) {
+            if (!agent.attrs) agent.attrs = {};
+            agent.attrs.x = _randomInteger(padding, self.width() - padding);
+            agent.attrs.y = _randomInteger(padding, self.height() - padding);
+          }
           new Agent(self, agent.attrs, agent.params, null, _group);
         });
       });
@@ -204,11 +223,13 @@ define(function (require) {
 
 
   function createFood() {
+    var padding = 50;
+
     return new Food(
       this, 
       {
-        x     : _randomInteger(100, 800),
-        y     : _randomInteger(100, 400),
+        x     : _randomInteger(padding, this.width() - padding),
+        y     : _randomInteger(padding, this.height() - padding),
         speed : 1
       }
     );
@@ -234,7 +255,10 @@ define(function (require) {
     $parentEl.style['-ms-user-select']       = 'none';
     $parentEl.style['user-select']           = 'none';
 
-    $parentEl.style['position'] = 'absolute';
+    $parentEl.style['position'] = 'relative';
+    $parentEl.style['display']  = 'block';
+    $parentEl.style['padding']  = 0;
+    $parentEl.style['overflow'] = 'visible';
 
     var margin_top     = parseFloat($parentEl.style['margin-top'], 10) || 0;
     var margin_right   = parseFloat($parentEl.style['margin-right'], 10) || 0;
@@ -270,6 +294,7 @@ define(function (require) {
     bodyEl.style['position'] = 'absolute';
     bodyEl.style['height']   = height + 'px';
     bodyEl.style['width']    = width + 'px';
+    bodyEl.style['border']   = 'solid 1px #ccc';
     $parentEl.appendChild(bodyEl);
     var $bodyElement = SVG(self.DEFAULT.BODY_HTML_ID)
       .size(width, height);
@@ -402,6 +427,11 @@ define(function (require) {
 
 
 
+  function getGroups() {
+    return this.findCollection('Group');
+  }
+
+
 
   function generateInstanceIDByObject(object) {
     if (!object || !object.id) return undefined;
@@ -491,6 +521,21 @@ define(function (require) {
     return undefined;
   }
 
+
+
+  function _export(type, options) {
+    if (type === 'json') return this.export_json(options); 
+  }
+
+
+
+  function export_json(options) {
+    var groups = this.getGroups();
+    groups = groups.map(function(group) {
+      return group.brain.toJSON();
+    });
+    return groups;
+  }
 
 
 

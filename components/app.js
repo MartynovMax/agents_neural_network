@@ -9,6 +9,11 @@
   angular.module('AngularApp').run(run);
 
   run.$inject = ['$rootScope'];
-  function run($rootScope){}
+  function run($rootScope){
+
+    // it will be a function after canvas directive init  
+    $rootScope.handlerGetGroups = undefined;
+
+  }
 
 })();

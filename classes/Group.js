@@ -12,7 +12,7 @@ define(function (require) {
     this.id        = _generateUID();
     this._canvas   = canvas;
     this._entities = entities || [];
-    this._score    = 0;
+    this.score     = 0;
     this.brain     = undefined;
 
     if (brain) {
@@ -99,14 +99,14 @@ define(function (require) {
 
 
   function incrementScore() {
-    // log('Group:' + this.id + ':score', this._score + 1)
-    return this._score++;
+    // log('Group:' + this.id + ':score', this.score + 1)
+    return this.score++;
   }
 
 
 
   function getScore() {
-    return this._score;
+    return this.score;
   }
 
 

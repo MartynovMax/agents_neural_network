@@ -14,8 +14,12 @@
     return {
       restrict: 'E',
       replace: true,
-      scope: {},
-      controller: 'AppCanvasCtrl'
+      scope: {
+        handlerGetGroups: '=',
+        handlerExport: '=',
+      },
+      controller: 'AppCanvasCtrl',
+      controllerAs: 'ctrl',
     };
   };
 
@@ -26,10 +30,16 @@
   function AppCanvasCtrl($scope, $element) {
     var self = this;
 
+    this.canvas = undefined;
+
     this.init = init;
     this.exampleTrain = exampleTrain;
     this.createCanvas = createCanvas;
+    this.getGroups    = getGroups;
+    this.export       = _export;
 
+    $scope.handlerGetGroups = this.getGroups;
+    $scope.handlerExport    = this.export;
     
     this.init();
 
@@ -40,13 +50,27 @@
 
     function init() {
       // _initOneAgent();
-      _initMultipleAgents();
+      // _initMultipleAgents();
     } 
+
+
+
+    function getGroups() {
+      var groups = self.canvas.getGroups();
+      return groups;
+    }
+
+
+
+    function _export(type, options) {
+      return self.canvas.export(type, options);
+    }
+
 
 
     function createCanvas(data) {
       requirejs(["Canvas"], function(Canvas) {
-        new Canvas($element[0], data, 'edit');
+        self.canvas = new Canvas($element[0], data, 'edit');
       });
     }
 
@@ -98,10 +122,7 @@
 
         for (var a=0; a < countAgents; a++) {
           groups[g].agents.push({
-            attrs: {
-              x: _randomInteger(100, 800),
-              y: _randomInteger(100, 400),
-            },
+            attrs: {},
           });
         }
       }
@@ -109,8 +130,6 @@
       for (var f = countFoods; f >= 1; f--) {
         foods.push({
           attrs: {
-            x     : _randomInteger(100, 800),
-            y     : _randomInteger(100, 400),
             speed : 1
           }
         });

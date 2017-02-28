@@ -115,9 +115,9 @@ define(function (require) {
       hiddenLayer.project(outputLayer, synaptic.Layer.connectionType.ALL_TO_ALL);
 
       this.perceptron = new synaptic.Network({
-          input: inputLayer,
-          hidden: [hiddenLayer],
-          output: outputLayer
+        input: inputLayer,
+        hidden: [hiddenLayer],
+        output: outputLayer
       });
 
 

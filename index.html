@@ -14,9 +14,31 @@
     <!-- endinject -->
   </head>
 
-  <body ng-app="AngularApp" style="margin: 0px;">
+  <body ng-app="AngularApp" style="margin: 10px;">
   
-    <app-canvas></app-canvas>
+    <div style="height: 300px;">
+        <app-canvas handler-get-groups="handlerGetGroups"
+                    handler-export="handlerExport">
+        </app-canvas>
+    </div>
+
+    <div>
+        <h4>
+            Controls:
+        </h4>
+
+        <button ng-click="handlerGetGroups()">
+            Get groups
+        </button>
+
+        <br>
+        <br>
+
+        <button ng-click="handlerExport('json')">
+            Export groups to JSON
+        </button>
+
+    </div>
 
 
     <script src="node_modules/angular/angular.min.js"></script>
