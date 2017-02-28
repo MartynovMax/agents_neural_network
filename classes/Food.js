@@ -74,6 +74,9 @@ define(function (require) {
       this.angle(
         this.angle() + (_randomInteger(-20, 20))
       );
+      this.speed(
+        _randomInteger(0.3, 1)
+      );
       this.move();
     }
   }

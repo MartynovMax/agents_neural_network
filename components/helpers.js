@@ -14,6 +14,7 @@
   _window.log            = _window.console.log.bind(_window.console);
   _window._rotatePoint   = _rotatePoint;
   _window._isPointInPoly = _isPointInPoly;
+  _window._generateUID   = _generateUID;
 
 
 
@@ -172,6 +173,13 @@
     return c;
   }
   
+
+  function _generateUID() {
+    function r() {
+      return Math.random().toString(36).substr(2, 4);
+    }
+    return r() + '-' + r() + '-' + r() + '-' + r();
+  }
 
 
 })(window);

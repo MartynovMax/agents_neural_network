@@ -1,14 +1,15 @@
 define(function (require) {
   'use strict';
 
-  // var NeuralNetwork = require('nn/NeuralNetwork');
-  var Point  = require('Point');
-  var Entity = require('Entity');
+  var NeuralNetwork = require('nn/NeuralNetwork');
+  var Point         = require('Point');
+  var Entity        = require('Entity');
+  var Group         = require('Group');
 
   _extendClass(Agent, Entity);
 
 
-  function Agent(_canvas, attrs, params, brain) {
+  function Agent(_canvas, attrs, params, brain, group) {
     var self = this;
     this.super();
 
@@ -20,17 +21,25 @@ define(function (require) {
     this._y            = attrs.y || 0;
     this._speed        = _isNum(attrs.speed) ? attrs.speed : this.DEFAULT.params.speed;
     this._score        = 0;
-    this._angle        = _isNum(attrs.angle) ? attrs.angle : this.DEFAULT.attrs.angle;
+    this._angle        = _isNum(attrs.angle) ? attrs.angle : _randomInteger(0, 360);
     this._visionAngle  = _isNum(attrs.visionAngle) ? attrs.visionAngle : this.DEFAULT.attrs.visionAngle;
     this._visionRadius = _isNum(attrs.visionRadius) ? attrs.visionRadius : this.DEFAULT.attrs.visionRadius;
     
     this.$element      = undefined;
     this.$visionArea   = undefined;
     this.brain         = undefined;
+    this.group         = undefined;
 
     if (brain) {
       this.setBrain(brain);
+    } else {
+      this.setBrain(new NeuralNetwork());
     }
+
+    if (group) {
+      this.setGroup(group);
+    }
+
 
     this.render();
     this._canvas.addEl(this);
@@ -43,7 +52,7 @@ define(function (require) {
     SPEED_MAX: 5,
     attrs: {
       speed        : 0,
-      angle        : _randomInteger(0, 360),
+      angle        : 0,
       visionAngle  : 110,
       visionRadius : 220,
     },
@@ -94,6 +103,9 @@ define(function (require) {
   _class.prototype.activateBrain   = activateBrain;
   _class.prototype.getBrainSignal  = getBrainSignal;
   _class.prototype.setBrain        = setBrain;
+
+  _class.prototype.setGroup        = setGroup;
+  _class.prototype.getGroup        = getGroup;
 
   _class.prototype.hasCollision    = hasCollision;
   _class.prototype.getNearFood     = getNearFood;
@@ -153,8 +165,6 @@ define(function (require) {
     var result = this.getBrainSignal();
     var denormalisedData = this.denormalizeData(result);
 
-    log('denormalisedData', result)
-
     // log('\nrawData', rawData)
     // log('normalisedData', normalisedData)
     // log('result', result)
@@ -187,7 +197,27 @@ define(function (require) {
 
   
   function setBrain(neuralNetwork){
+    if ( !(neuralNetwork instanceof NeuralNetwork) ) {
+      throw Error('Incorrect instance');
+    }
     this.brain = neuralNetwork;
+  }
+
+
+
+  function setGroup(group){
+    if ( !(group instanceof Group) ) {
+      throw Error('Incorrect instance');
+    }
+    this.group = group;
+    this.setBrain(group.brain);
+    this.group.add(this);
+  }
+
+
+
+  function getGroup(){
+    return this.group;
   }
 
 

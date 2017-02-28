@@ -4,7 +4,7 @@ define(function (require) {
   function Entity() {
     var self = this;
 
-    this.id      = this.generateID();
+    this.id      = _generateUID();
     this._canvas = undefined;
     this._x      = 0;
     this._y      = 0;
@@ -27,7 +27,6 @@ define(function (require) {
   _class.prototype.hasCollisionWith = hasCollisionWith;
   _class.prototype.isOutFromCanvas  = isOutFromCanvas;
   _class.prototype.getDistanceTo    = getDistanceTo;
-  _class.prototype.generateID       = generateID;
 
   return _class;
 
@@ -153,13 +152,5 @@ define(function (require) {
     return false;
   }
 
-
-
-  function generateID() {
-    function r() {
-      return Math.random().toString(36).substr(2, 4);
-    }
-    return r() + '-' + r() + '-' + r() + '-' + r();
-  }
 
 });

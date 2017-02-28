@@ -96,6 +96,7 @@ define(function (require) {
       throw new Error('Could not get after activation signal');
     }
   }
+  
 
   // function createPerceptron() {
   //   var _json = undefined;

@@ -3,6 +3,7 @@ define(function (require) {
 
   var Agent = require('Agent');
   var Food  = require('Food');
+  var Group = require('Group');
 
   // constructor
   function Canvas($parentEl, inputData) {
@@ -172,21 +173,33 @@ define(function (require) {
 
 
   function renderData(data) {
-    var _agents = data.agents
-    var _foods  = data.foods
+    var self = this;
 
-    if (!Array.isArray(_agents) || !_agents.length) return undefined;
-    var self  = this;
-    var agents = angular.copy(_agents);
-    var foods  = angular.copy(_foods);
+    if (data.agents) {
+      var agents = angular.copy(data.agents);
+      agents.map(function(agent) {
+        return new Agent(self, agent.attrs, agent.params, agent.brain);
+      });
+    }
 
-    agents.map(function(agent) {
-      return new Agent(self, agent.attrs, agent.params, agent.brain);
-    });
+    if (data.foods) {
+      var foods  = angular.copy(data.foods);
+      foods.map(function(food) {
+        return new Food(self, food.attrs, food.params);
+      });
+    }
 
-    foods.map(function(food) {
-      return new Food(self, food.attrs, food.params);
-    });
+    if (data.groups) {
+      var groups = angular.copy(data.groups);
+
+      groups.forEach(function(group){
+        var _group = new Group(self);
+
+        group.agents.forEach(function(agent) {
+          new Agent(self, agent.attrs, agent.params, null, _group);
+        });
+      });
+    }
   }
 
 

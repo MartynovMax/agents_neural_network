@@ -40,8 +40,8 @@
 
     function init() {
       // _initOneAgent();
-      // _initMultipleAgents();
-    }
+      _initMultipleAgents();
+    } 
 
 
     function createCanvas(data) {
@@ -53,67 +53,70 @@
 
 
     function _initOneAgent() {
-      requirejs(["nn/NeuralNetwork"], function(NeuralNetwork) {
-        var numberAgents = 1;
-        var numberFoods  = 1;
-        var agents = [];
-        var foods  = [];
+      var numberAgents = 1;
+      var numberFoods  = 1;
+      var agents = [];
+      var foods  = [];
 
-        agents.push({
-          attrs: {
-            x     : 100,
-            y     : 200,
-            angle : 90,
-            speed : 0,
-          },
-          brain: new NeuralNetwork()
-        });
-
-        foods.push({
-          attrs: {
-            x     : 200,
-            y     : 200,
-            angle : 90,
-            speed : 1,
-          },
-          params: {
-            isAllowMove: true,
-          }
-        });
-
-        self.createCanvas({agents: agents, foods: foods});
+      agents.push({
+        attrs: {
+          x     : 100,
+          y     : 200,
+          angle : 90,
+          speed : 0,
+        },
       });
+
+      foods.push({
+        attrs: {
+          x     : 200,
+          y     : 200,
+          angle : 90,
+          speed : 1,
+        },
+        params: {
+          isAllowMove: true,
+        }
+      });
+
+      self.createCanvas({agents: agents, foods: foods});
     }
 
 
 
 
     function _initMultipleAgents() {
-      var numberAgents = 1;
-      var numberFoods  = 5;
-      var agents = [];
-      var foods  = [];
+      var countGroups = 3;
+      var countAgents = 3;
+      var countFoods  = countGroups * countAgents;
+      var groups      = [];
+      var foods       = [];
 
-      for (var i = numberAgents; i >= 1; i--) {
-        agents.push({
-          attrs: {
-            x: _randomInteger(100, 600),
-            y: _randomInteger(100, 300),
-          }
-        });
+      for (var g=0; g < countGroups; g++) {
+        groups[g]        = {};
+        groups[g].agents = [];
+
+        for (var a=0; a < countAgents; a++) {
+          groups[g].agents.push({
+            attrs: {
+              x: _randomInteger(100, 800),
+              y: _randomInteger(100, 400),
+            },
+          });
+        }
       }
 
-      for (var i = numberFoods; i >= 1; i--) {
+      for (var f = countFoods; f >= 1; f--) {
         foods.push({
           attrs: {
-            x: _randomInteger(100, 600),
-            y: _randomInteger(100, 300),
-            speed: 1
+            x     : _randomInteger(100, 800),
+            y     : _randomInteger(100, 400),
+            speed : 1
           }
         });
       }
 
-      self.createCanvas({agents: agents, foods: foods});
+      self.createCanvas({groups: groups, foods: foods});
     }
 
 
