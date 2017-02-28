@@ -24,6 +24,7 @@ define(function (require) {
   _class.prototype.speed  = speed;
   _class.prototype.angle  = angle;
 
+  _class.prototype.move             = move;
   _class.prototype.hasCollisionWith = hasCollisionWith;
   _class.prototype.isOutFromCanvas  = isOutFromCanvas;
   _class.prototype.getDistanceTo    = getDistanceTo;
@@ -79,7 +80,11 @@ define(function (require) {
 
 
   function angle(val) {
-    if (val) {
+    if (_isNum(val)) {
+      if (val < 0 ) val = Math.abs(val);
+      if (val >= 360) {
+        val = val%360;
+      }
       this._angle = val;
       this.$element.get(0).rotate(this._angle, 0, 0);
     } else {
@@ -129,6 +134,7 @@ define(function (require) {
   }
 
 
+
   function getDistanceTo(item) {
     if (!item) return 0;
     var pointSelf = new SVG.math.Point(this.x(), this.y());
@@ -137,6 +143,37 @@ define(function (require) {
       new SVG.math.Line(pointSelf, pointItem).segmentLengthSquared()
     );
   }
+
+
+
+  function move() {
+    var speed = this.speed(); 
+    var angle = this.angle(); 
+    var x     = this._x + speed * Math.sin(_toRadians(angle));
+    var y     = this._y - speed * Math.cos(_toRadians(angle));
+
+    var isOutFromCanvas = this.isOutFromCanvas(x, y);
+
+    if (isOutFromCanvas) {
+      x = this._x;
+      y = this._y;
+      var margin = 10;
+
+      if (angle >= 0 && angle < 90) {
+        this.angle(_randomInteger(90 + margin, 360 - margin));
+      } else if (angle >= 90 && angle < 180) {
+        this.angle(_randomInteger(180 + margin, 360+90 - margin));
+      } else if (angle >= 180 && angle < 270) {
+        this.angle(_randomInteger(270 + margin, 360+180 - margin));
+      } else if (angle >= 270 && angle < 360) {
+        this.angle(_randomInteger(0 + margin, 270 - margin));
+      } 
+    } 
+
+    this.x(x);
+    this.y(y);
+  }
+
 
 
   function isOutFromCanvas(x, y) {

@@ -24,6 +24,10 @@ define(function (require) {
 
     this.$element = undefined;
 
+    if (this._x ==0 && this._y == 0) {
+      log('!!', this, attrs)
+    }
+
 
     this.render();
     this._canvas.addEl(this);
@@ -58,12 +62,9 @@ define(function (require) {
   }
 
 
-  _class.prototype.move    = move;
   _class.prototype.render  = render;
   _class.prototype.update  = update;
   _class.prototype.destroy = destroy;
-
-  _class.prototype.isOutFromCanvas = isOutFromCanvas;
 
   return _class;
 
@@ -79,50 +80,6 @@ define(function (require) {
       );
       this.move();
     }
-  }
-
-
-  function move() {
-    var speed = this.speed(); 
-    var angle = this.angle(); 
-    var x     = this._x + speed * Math.sin(_toRadians(angle));
-    var y     = this._y - speed * Math.cos(_toRadians(angle));
-
-    var isOutFromCanvas = this.isOutFromCanvas(x, y);
-
-    if (isOutFromCanvas) {
-      if (isOutFromCanvas === 'x') {
-        if (this.x() < x) {
-          x = this.width();
-        } else {
-          x = this._canvas.width() - this.width();
-        }
-      }
-      if (isOutFromCanvas === 'y') {
-        if (this.y() < y) {
-          y = this.height();
-        } else {
-          y = this._canvas.height() - this.height();
-        }
-      }
-    } 
-
-    this.x(x);
-    this.y(y);
-  }
-
-
-  function isOutFromCanvas(x, y) {
-    var width  = this._canvas.width();
-    var height = this._canvas.height();
-
-    if (x <= this.width()/2 || x >= width) {
-      return 'x';
-    }
-    if (y <= this.height()/2 || y >= height) {
-      return 'y';
-    }
-    return false;
   }
 
 

@@ -54,7 +54,7 @@ define(function (require) {
     CACHE_TABLE_NAME: 'Canvas',
     width: 900,
     height: 500,
-    LOOP_INTERVAL: 50,
+    LOOP_INTERVAL: 40,
     styles: {
       background: '#fff',
       fill: {
@@ -206,8 +206,11 @@ define(function (require) {
   function createFood() {
     return new Food(
       this, 
-      _randomInteger(0, this.width()),
-      _randomInteger(0, this.height())
+      {
+        x     : _randomInteger(100, 800),
+        y     : _randomInteger(100, 400),
+        speed : 1
+      }
     );
   } 
 

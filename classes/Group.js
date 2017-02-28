@@ -12,6 +12,7 @@ define(function (require) {
     this.id        = _generateUID();
     this._canvas   = canvas;
     this._entities = entities || [];
+    this._score    = 0;
     this.brain     = undefined;
 
     if (brain) {
@@ -39,6 +40,9 @@ define(function (require) {
   _class.prototype.length     = length;
   _class.prototype.destroy    = destroy;
   _class.prototype.setBrain   = setBrain;
+
+  _class.prototype.incrementScore = incrementScore;
+  _class.prototype.getScore       = getScore;
 
   return _class;
 
@@ -90,6 +94,19 @@ define(function (require) {
       throw Error('Incorrect instance');
     }
     this.brain = neuralNetwork;
+  }
+
+
+
+  function incrementScore() {
+    // log('Group:' + this.id + ':score', this._score + 1)
+    return this._score++;
+  }
+
+
+
+  function getScore() {
+    return this._score;
   }
 
 

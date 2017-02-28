@@ -49,7 +49,7 @@ define(function (require) {
   var _class = Agent;
 
   _class.prototype.DEFAULT = {
-    SPEED_MAX: 5,
+    SPEED_MAX: 8,
     attrs: {
       speed        : 0,
       angle        : 0,
@@ -93,10 +93,9 @@ define(function (require) {
   _class.prototype.render  = render;
   _class.prototype.update  = update;
   _class.prototype.destroy = destroy;
-  _class.prototype.move    = move;
 
   _class.prototype.eat             = eat;
-  _class.prototype.incrementPoints = incrementPoints;
+  _class.prototype.incrementScore  = incrementScore;
 
   _class.prototype.normalizeData   = normalizeData;
   _class.prototype.denormalizeData = denormalizeData;
@@ -109,7 +108,6 @@ define(function (require) {
 
   _class.prototype.hasCollision    = hasCollision;
   _class.prototype.getNearFood     = getNearFood;
-  _class.prototype.isOutFromCanvas = isOutFromCanvas;
   _class.prototype.distanceTo      = distanceTo;
 
   return _class;
@@ -161,8 +159,8 @@ define(function (require) {
     };
 
     var normalisedData   = this.normalizeData(rawData);
-    this.activateBrain(normalisedData);
-    var result = this.getBrainSignal();
+    var result = this.activateBrain(normalisedData);
+    // var result = this.getBrainSignal();
     var denormalisedData = this.denormalizeData(result);
 
     // log('\nrawData', rawData)
@@ -171,18 +169,17 @@ define(function (require) {
     // log('denormalisedData', denormalisedData)
 
     this.angle(angle + denormalisedData.angle);
-    // this.speed(0);
-    // this.speed(denormalisedData.speed);
+    this.speed(denormalisedData.speed);
     this.move();
   }
 
 
   // TODO: validate me
   function activateBrain(dataObj) {
-    this.brain.putSignalToNeuron(0, dataObj.isSeeFood);
-    this.brain.putSignalToNeuron(1, dataObj.angleToFood);
-    this.brain.putSignalToNeuron(2, dataObj.distanceToFood);
-    this.brain.activate();
+    // this.brain.putSignalToNeuron(0, dataObj.isSeeFood);
+    // this.brain.putSignalToNeuron(1, dataObj.angleToFood);
+    // this.brain.putSignalToNeuron(2, dataObj.distanceToFood);
+    return this.brain.activate(dataObj);
   }
 
 
@@ -436,13 +433,17 @@ define(function (require) {
     if (!item) return undefined;
     item.destroy();
     this.speed(0);
-    this.incrementPoints();
+    this.incrementScore();
   }
 
 
-  function incrementPoints() {
+  function incrementScore() {
     this._score++;
     this.$element.get(2).text(new String(this._score));
+
+    if (this.group) {
+      this.group.incrementScore();
+    }
   }
 
 
@@ -453,50 +454,6 @@ define(function (require) {
     return Math.sqrt(
       new SVG.math.Line(pointSelf, pointItem).segmentLengthSquared()
     );
-  }
-
-
-  function move() {
-    var speed = this.speed(); 
-    var angle = this.angle(); 
-    var x     = this._x + speed * Math.sin(_toRadians(angle));
-    var y     = this._y - speed * Math.cos(_toRadians(angle));
-
-    var isOutFromCanvas = this.isOutFromCanvas(x, y);
-
-    if (isOutFromCanvas) {
-      if (isOutFromCanvas === 'x') {
-        if (this.x() < x) {
-          x = this.width();
-        } else {
-          x = this._canvas.width() - this.width();
-        }
-      }
-      if (isOutFromCanvas === 'y') {
-        if (this.y() < y) {
-          y = this.height();
-        } else {
-          y = this._canvas.height() - this.height();
-        }
-      }
-    } 
-
-    this.x(x);
-    this.y(y);
-  }
-
-
-  function isOutFromCanvas(x, y) {
-    var width  = this._canvas.width();
-    var height = this._canvas.height();
-
-    if (x <= this.width()/2 || x >= width) {
-      return 'x';
-    }
-    if (y <= this.height()/2 || y >= height) {
-      return 'y';
-    }
-    return false;
   }
 
 
