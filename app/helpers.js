@@ -8,6 +8,7 @@
   _window._isObject      = _isObject;
   _window._isBool        = _isBool;
   _window._isNum         = _isNum;
+  _window._isArray       = _isArray;
   _window._toDegrees     = _toDegrees;
   _window._toRadians     = _toRadians;
   _window._randomInteger = _randomInteger;
@@ -128,6 +129,11 @@
 
   function _isBool(item) {
     return typeof item === 'boolean';
+  }
+
+
+  function _isArray(item) {
+    return Array.isArray(item);
   }
 
 

@@ -43,8 +43,8 @@
       }.bind(this));
 
 
-      // _initOneAgent();
-      _initMultipleAgents();
+      _initOneAgent();
+      // _initMultipleAgents();
     } 
 
 
@@ -57,7 +57,6 @@
 
 
     function _export(type, options) {
-      log('_export')
       return self.canvas.export(type, options);
     }
 
@@ -65,7 +64,18 @@
 
     function createCanvas(data) {
       requirejs(["Canvas"], function(Canvas) {
-        self.canvas = new Canvas($element[0], data, 'edit');
+        self.canvas = new Canvas(
+          $element[0], 
+          {
+            map: {
+              params: {
+                isRandomWalls: true,
+                entities: data,
+              },
+            },
+          }, 
+          'edit'
+        );
       });
     }
 
@@ -98,7 +108,7 @@
         }
       });
 
-      self.createCanvas({agents: agents, foods: foods});
+      self.createCanvas({Agent: agents, Food: foods});
     }
 
 
@@ -113,12 +123,12 @@
 
       for (var g=0; g < countGroups; g++) {
         groups[g]        = {};
-        groups[g].agents = [];
+        groups[g].params = {};
+        groups[g].params.entityClass = 'Agent';
+        groups[g].params.entities    = [];
 
         for (var a=0; a < countAgents; a++) {
-          groups[g].agents.push({
-            attrs: {},
-          });
+          groups[g].params.entities.push({});
         }
       }
 
@@ -130,7 +140,7 @@
         });
       }
 
-      self.createCanvas({groups: groups, foods: foods});
+      self.createCanvas({Group: groups, Food: foods});
     }
 
 

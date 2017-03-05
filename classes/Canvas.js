@@ -4,10 +4,13 @@ define(function (require) {
   var Agent = require('Agent');
   var Food  = require('Food');
   var Group = require('Group');
+  var _Map  = require('Map');
 
   // constructor
   function Canvas($parentEl, inputData) {
     var self = this;
+
+    if (!inputData) inputData = {};
 
     // Public properties, assigned to the instance ('this')
     this.HTML_ID       = this.DEFAULT.HTML_ID;
@@ -15,20 +18,11 @@ define(function (require) {
     this.$element      = undefined;
     this.$body         = undefined;
     this.$bodyRect     = undefined;
-    this.$grid         = undefined;
     this.$background   = undefined;
     this.styles        = this.DEFAULT.styles;
+    this.map           = undefined;
     this._loopInterval = undefined;
 
-
-    /*
-     * List of Classes on the canvas. 
-     * Here should be stored all elements
-     * 
-     * key {string} - '{class name}:{id}', eq. 'Agent:akr5-sd89-12cv-s5f8'
-     * value {class} - link on a class
-     */
-    this._elementsList = {};
 
     // coordinates of the cursor
     this._cx = 0;
@@ -36,7 +30,7 @@ define(function (require) {
 
     setTimeout(function(){
       this.render();
-      this.renderData(inputData);
+      this.renderMap(inputData.map);
       this.setListeners();
       this.loopStart();
     }.bind(this));
@@ -90,19 +84,13 @@ define(function (require) {
 
   _class.prototype.destroy      = destroy;
   _class.prototype.setListeners = setListeners;
-  _class.prototype.renderData   = renderData;
+  _class.prototype.renderMap    = renderMap;
   _class.prototype.fire         = fire;
 
-  _class.prototype.findEl           = findEl;
-  _class.prototype.findCollection   = findCollection;
-  _class.prototype.addEl            = addEl;
-  _class.prototype.removeEl         = removeEl;
-  _class.prototype.getNearFood      = getNearFood;
-
-  _class.prototype.generateInstanceIDByObject  = generateInstanceIDByObject;
-  _class.prototype.generateInstanceIDByDetails = generateInstanceIDByDetails;
-
   _class.prototype.isInsideBody = isInsideBody;
+
+  _class.prototype.setMap      = setMap;
+  _class.prototype.getMap      = getMap;
 
   _class.prototype.export      = _export;
   _class.prototype.export_json = export_json;
@@ -162,7 +150,8 @@ define(function (require) {
 
 
   function __updateAllInArray(collectionName){
-    this.findCollection(collectionName)
+    this.map
+      .findCollection(collectionName)
       .forEach(function(item) {
         if (item) item.update();
       });
@@ -176,49 +165,16 @@ define(function (require) {
 
 
 
-  function renderData(data) {
-    var self = this;
-    var padding = 50;
+  function renderMap(map) {
+    if (!map) return undefined;
 
-    if (data.agents) {
-      var agents = angular.copy(data.agents);
-      agents.map(function(agent) {
-        if (!agent.attrs || !agent.attrs.x && !agent.attrs.y) {
-          if (!agent.attrs) agent.attrs = {};
-          agent.attrs.x = _randomInteger(padding, self.width() - padding);
-          agent.attrs.y = _randomInteger(padding, self.height() - padding);
-        }
-        return new Agent(self, agent.attrs, agent.params, agent.brain);
-      });
-    }
-
-    if (data.foods) {
-      var foods  = angular.copy(data.foods);
-      foods.map(function(food) {
-        if (!food.attrs || !food.attrs.x && !food.attrs.y) {
-          food.attrs.x = _randomInteger(padding, self.width() - padding);
-          food.attrs.y = _randomInteger(padding, self.height() - padding);
-        }
-        return new Food(self, food.attrs, food.params);
-      });
-    }
-
-    if (data.groups) {
-      var groups = angular.copy(data.groups);
-
-      groups.forEach(function(group){
-        var _group = new Group(self);
-
-        group.agents.forEach(function(agent) {
-          if (!agent.attrs || !agent.attrs.x && !agent.attrs.y) {
-            if (!agent.attrs) agent.attrs = {};
-            agent.attrs.x = _randomInteger(padding, self.width() - padding);
-            agent.attrs.y = _randomInteger(padding, self.height() - padding);
-          }
-          new Agent(self, agent.attrs, agent.params, null, _group);
-        });
-      });
-    }
+    this.setMap(
+      new _Map(
+        this, 
+        map.attrs, 
+        map.params
+      )
+    );
   }
 
 
@@ -433,98 +389,20 @@ define(function (require) {
 
 
 
-  function generateInstanceIDByObject(object) {
-    if (!object || !object.id) return undefined;
-    var instanceName = object.constructor.name;
-    if (!instanceName) return undefined;
-    return this.generateInstanceIDByDetails(object.id, instanceName);
-  }
-
-
-  function generateInstanceIDByDetails(objectID, instanceName) {
-    if (!objectID) return undefined;
-    if (!instanceName) return undefined;
-    return instanceName + ':' + objectID;
-  }
-
-
-
-  function findEl(objectID, instanceName) {
-    if (!objectID) throw new Error('Object ID is undefined');
-    var key = this.generateInstanceIDByDetails(objectID, instanceName);
-    if (!key) throw new Error('Could not generate instance ID');
-    return this._elementsList[key];
-  }
-
-
-  function findCollection(instanceName) {
-    var self = this;
-    if (!instanceName) throw new Error('Collection name is undefined');
-    var keys = Object.keys(this._elementsList);
-
-    keys = keys.filter(function(key) {
-      if (new RegExp('^' + instanceName).test(key)) return key;
-    })
-    .map(function (key) {
-      return self._elementsList[key];
-    });
-
-    return keys;
-  }
-
-
-  // TODO: not in use
-  function getNearFood(x, y) {
-    var collection = this.findCollection('Food');
-    var resultList = {};
-
-    collection.forEach(function(item) {
-      if (!item) return undefined;
-
-      var x1 = x; 
-      var y1 = y; 
-
-      var x2 = item.x(); 
-      var y2 = item.y(); 
-
-      var dist = Math.sqrt( Math.pow((x1-x2), 2) + Math.pow((y1-y2), 2) );
-      resultList[dist] = item;
-    });  
-
-    var keys   = Object.keys(resultList);
-    var minKey = Math.min.apply(Math, keys);
-    return resultList[minKey] || null;
-  }
-
-
-
-
-  function addEl(object, isAddToBody) {
-    if (!object) throw new Error('Object is undefined');
-    var key = this.generateInstanceIDByObject(object);
-    if (!key) throw new Error('Could not generate instance ID');
-
-    if (isAddToBody) {
-      this.$body.add(object.$element)
-    }
-
-    return this._elementsList[key] = object;
-  }
-
-
-
-  function removeEl(object) {
-    if (!object) throw new Error('Object is undefined');
-    var key = this.generateInstanceIDByObject(object);
-    if (!key) throw new Error('Could not generate instance ID');
-    delete this._elementsList[key];
-    return undefined;
-  }
-
-
-
   function _export(type, options) {
     if (type === 'json') return this.export_json(options); 
+  }
+
+
+
+  function setMap(map) {
+    this.map = map;
+  }
+
+
+
+  function getMap() {
+    return this.map;
   }
 
 

@@ -6,15 +6,15 @@ define(function (require) {
     
   _extendClass(Food, Entity);
 
-
-  function Food(_canvas, attrs, params) {
+  // constructor
+  function Food(map, attrs, params) {
     var self = this;
     this.super();
 
     if (!attrs) attrs = {};
     if (!params) params = {};
 
-    this._canvas  = _canvas;
+    this.map      = map;
     this._x       = attrs.x || 0;
     this._y       = attrs.y || 0;
     this._speed   = _isNum(attrs.speed) ? attrs.speed : this.DEFAULT.attrs.speed;
@@ -24,13 +24,9 @@ define(function (require) {
 
     this.$element = undefined;
 
-    if (this._x ==0 && this._y == 0) {
-      log('!!', this, attrs)
-    }
-
 
     this.render();
-    this._canvas.addEl(this);
+    this.map.addEl(this);
   }
 
 
@@ -85,7 +81,7 @@ define(function (require) {
 
 
   function render() {
-    var $draw    = this._canvas.$element;
+    var $draw    = this.map.$element;
     var $element = $draw.group();
     var $body    = undefined;
     var $line    = undefined;
@@ -151,8 +147,8 @@ define(function (require) {
   function destroy() {
     this.$element.remove();
     this.$element.fire(this.EVENTS.DESTROY);
-    this._canvas.removeEl(this);
-    this._canvas.createFood();
+    this.map.removeEl(this);
+    this.map.createFood();
   }
 
 

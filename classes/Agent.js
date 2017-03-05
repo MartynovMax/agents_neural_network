@@ -8,15 +8,15 @@ define(function (require) {
 
   _extendClass(Agent, Entity);
 
-
-  function Agent(_canvas, attrs, params, brain, group) {
+  // constructor
+  function Agent(map, attrs, params) {
     var self = this;
     this.super();
 
     if (!attrs) attrs = {};
     if (!params) params = {};
 
-    this._canvas       = _canvas;
+    this.map           = map;
     this._x            = attrs.x || 0;
     this._y            = attrs.y || 0;
     this._speed        = _isNum(attrs.speed) ? attrs.speed : this.DEFAULT.params.speed;
@@ -30,19 +30,19 @@ define(function (require) {
     this.brain         = undefined;
     this.group         = undefined;
 
-    if (brain) {
-      this.setBrain(brain);
+    if (params.brain) {
+      this.setBrain(params.brain);
     } else {
       this.setBrain(new NeuralNetwork());
     }
 
-    if (group) {
-      this.setGroup(group);
+    if (params.group) {
+      this.setGroup(params.group);
     }
 
 
     this.render();
-    this._canvas.addEl(this);
+    this.map.addEl(this);
   }
 
 
@@ -223,8 +223,8 @@ define(function (require) {
     var x          = this.x();
     var y          = this.y();
     var angle      = this.angle();
-    var canvas     = this._canvas;
-    var collection = canvas.findCollection('Food');
+    var map        = this.map;
+    var collection = map.findCollection('Food');
     var resultList = {};
 
     var pointArcStart = new Point(x + this.$visionArea._array.value[1][1], y + this.$visionArea._array.value[1][2]);
@@ -244,7 +244,7 @@ define(function (require) {
     });
 
 
-    // var _drawArea = this._canvas.$element
+    // var _drawArea = this.map.$element
     //   .path()
     //   .M(areaPath[0].x, areaPath[0].y)
     //   .L(areaPath[1].x, areaPath[1].y)
@@ -295,7 +295,7 @@ define(function (require) {
 
 
   function render() {
-    var $draw       = this._canvas.$element;
+    var $draw       = this.map.$element;
     var $element    = $draw.group();
     var $body       = undefined;
     var $vision     = undefined;
@@ -384,7 +384,7 @@ define(function (require) {
   function destroy() {
     this.$element.remove();
     this.$element.fire(this.EVENTS.DESTROY);
-    this._canvas.removeEl(this);
+    this.map.removeEl(this);
   }
 
 

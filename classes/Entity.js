@@ -1,11 +1,12 @@
 define(function (require) {
   'use strict';
 
+  // constructor
   function Entity() {
     var self = this;
 
     this.id      = _generateUID();
-    this._canvas = undefined;
+    this.map     = undefined;
     this._x      = 0;
     this._y      = 0;
     this._speed  = 0;
@@ -177,8 +178,8 @@ define(function (require) {
 
 
   function isOutFromCanvas(x, y) {
-    var width  = this._canvas.width();
-    var height = this._canvas.height();
+    var width  = this.map.width();
+    var height = this.map.height();
 
     if (x <= this.width()/2 || x >= width) {
       return 'x';

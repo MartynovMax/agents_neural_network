@@ -5,23 +5,24 @@ define(function (require) {
 
     
   // constructor
-  function Group(canvas, entities, params, brain) {
+  function Group(map, attrs, params) {
     var self = this;
     if (!params) params = {};
 
-    this.id        = _generateUID();
-    this._canvas   = canvas;
-    this._entities = entities || [];
-    this.score     = 0;
-    this.brain     = undefined;
+    this.id           = _generateUID();
+    this.map          = map;
+    this._entities    = params.entities || [];
+    this._entityClass = params.entityClass || '';
+    this.score        = 0;
+    this.brain        = undefined;
 
-    if (brain) {
-      this.setBrain(brain);
+    if (params.brain) {
+      this.setBrain(params.brain);
     } else {
       this.setBrain(new NeuralNetwork());
     }
 
-    this._canvas.addEl(this);
+    this.map.addEl(this);
   }
 
 
