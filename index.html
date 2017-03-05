@@ -10,15 +10,15 @@
     <!-- endinject -->
     
     <!-- styles:css -->
-    <link rel="stylesheet" href="components/styles/app.css">
+    <link rel="stylesheet" href="app/styles/app.css">
     <!-- endinject -->
   </head>
 
   <body ng-app="AngularApp" style="margin: 10px;">
   
     <div style="height: 300px;">
-        <app-canvas handler-get-groups="handlerGetGroups"
-                    handler-export="handlerExport">
+        <app-canvas handler-get-groups="handlers.getGroups"
+                    handler-export="handlers.export">
         </app-canvas>
     </div>
 
@@ -27,14 +27,14 @@
             Controls:
         </h4>
 
-        <button ng-click="handlerGetGroups()">
+        <button ng-click="getGroups()">
             Get groups
         </button>
 
         <br>
         <br>
 
-        <button ng-click="handlerExport('json')">
+        <button ng-click="handlers.export('json')">
             Export groups to JSON
         </button>
 
@@ -52,16 +52,16 @@
     <script src="node_modules/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
     <script src="node_modules/save-svg-as-png/saveSvgAsPng.js"></script>
     <script src="node_modules/synaptic/dist/synaptic.js"></script>
-    <script src="components/vendor/svg.math.js/svg.math.min.js"></script>
-    <script src="components/vendor/svg.foreignobject.js/svg.foreignobject.js"></script>
-    <script src="components/vendor/line-circle-collision/index.js"></script>
-    <script src="components/vendor/requirejs/require.js"></script>
+    <script src="app/vendor/svg.math.js/svg.math.min.js"></script>
+    <script src="app/vendor/svg.foreignobject.js/svg.foreignobject.js"></script>
+    <script src="app/vendor/line-circle-collision/index.js"></script>
+    <script src="app/vendor/requirejs/require.js"></script>
     <!-- endinject -->
 
     <!-- components:js -->
-    <script src="components/app.js"></script>
-    <script src="components/helpers.js"></script>
-    <script src="components/directives/appCanvas/appCanvas.js"></script>
+    <script src="app/app.js"></script>
+    <script src="app/helpers.js"></script>
+    <script src="app/components/appCanvas/appCanvas.js"></script>
     <script src="classes/main.js"></script>
     <!-- endinject -->
   </body>

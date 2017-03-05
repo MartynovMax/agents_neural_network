@@ -23,21 +23,21 @@ var PATHS = {
     './package.json'
   ],
   APP: [
-    './components/helpers.js',
-    './components/app.js',
+    './app/helpers.js',
+    './app/app.js',
   ],
   JS: [
-    '!./components/vendor/*',
-    '!./components/vendor/*/*',
-    './components/*.js',
-    './components/*/*.js',
-    './components/*/*/*.js',
+    '!./app/vendor/*',
+    '!./app/vendor/*/*',
+    './app/*.js',
+    './app/*/*.js',
+    './app/*/*/*.js',
     './classes/main.js',
   ],
   CSS: [
-    './components/*.css',
-    './components/*/*.css',
-    './components/*/*/*.css',
+    './app/*.css',
+    './app/*/*.css',
+    './app/*/*/*.css',
   ],
   DEPENDENCIES: {
     JS: [
@@ -50,10 +50,10 @@ var PATHS = {
       'node_modules/svg-pan-zoom/dist/svg-pan-zoom.min.js',
       'node_modules/save-svg-as-png/saveSvgAsPng.js',
       'node_modules/synaptic/dist/synaptic.js',
-      'components/vendor/svg.math.js/svg.math.min.js',
-      'components/vendor/svg.foreignobject.js/svg.foreignobject.js',
-      'components/vendor/line-circle-collision/index.js',
-      'components/vendor/requirejs/require.js',
+      'app/vendor/svg.math.js/svg.math.min.js',
+      'app/vendor/svg.foreignobject.js/svg.foreignobject.js',
+      'app/vendor/line-circle-collision/index.js',
+      'app/vendor/requirejs/require.js',
     ],
     CSS: [
       'node_modules/svg.select.js/dist/svg.min.css',
@@ -352,6 +352,6 @@ function setVersionAngularApp(version){
         "constant('APP_VERSION', '" + version + "')"
       )
     )
-    .pipe(gulp.dest('./components'));
+    .pipe(gulp.dest('./app'));
 }
 

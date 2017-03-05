@@ -6,40 +6,28 @@
     <app-canvas></app-canvas> 
   */
   angular.module('AngularApp')
-    .directive('appCanvas', appCanvas)
-    .controller('AppCanvasCtrl', AppCanvasCtrl);
-
-
-  function appCanvas() {
-    return {
-      restrict: 'E',
-      replace: true,
-      scope: {
-        handlerGetGroups: '=',
-        handlerExport: '=',
+    .component('appCanvas', {
+      bindings: {
+        handlerGetGroups : '=',
+        handlerExport    : '=',
       },
-      controller: 'AppCanvasCtrl',
-      controllerAs: 'ctrl',
-    };
-  };
+      controller: AppCanvasCtrl,
+    });
 
 
 
-  AppCanvasCtrl.$inject = ['$scope', '$element'];
+  AppCanvasCtrl.$inject = ['$element', '$timeout'];
 
-  function AppCanvasCtrl($scope, $element) {
+  function AppCanvasCtrl($element, $timeout) {
     var self = this;
 
     this.canvas = undefined;
 
-    this.init = init;
+    this.init         = init;
     this.exampleTrain = exampleTrain;
     this.createCanvas = createCanvas;
     this.getGroups    = getGroups;
     this.export       = _export;
-
-    $scope.handlerGetGroups = this.getGroups;
-    $scope.handlerExport    = this.export;
     
     this.init();
 
@@ -49,8 +37,14 @@
 
 
     function init() {
+      $timeout(function(){
+        this.handlerGetGroups = this.getGroups;
+        this.handlerExport    = this.export;
+      }.bind(this));
+
+
       // _initOneAgent();
-      // _initMultipleAgents();
+      _initMultipleAgents();
     } 
 
 
@@ -63,6 +57,7 @@
 
 
     function _export(type, options) {
+      log('_export')
       return self.canvas.export(type, options);
     }
 
