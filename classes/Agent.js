@@ -21,6 +21,8 @@ define(function (require) {
     this._y            = attrs.y || 0;
     this._speed        = _isNum(attrs.speed) ? attrs.speed : this.DEFAULT.params.speed;
     this._score        = 0;
+    this._satiety      = 1;
+    this._starveCoeff  = 0.005;
     this._angle        = _isNum(attrs.angle) ? attrs.angle : _randomInteger(0, 360);
     this._visionAngle  = _isNum(attrs.visionAngle) ? attrs.visionAngle : this.DEFAULT.attrs.visionAngle;
     this._visionRadius = _isNum(attrs.visionRadius) ? attrs.visionRadius : this.DEFAULT.attrs.visionRadius;
@@ -30,14 +32,15 @@ define(function (require) {
     this.brain         = undefined;
     this.group         = undefined;
 
-    if (params.brain) {
-      this.setBrain(params.brain);
-    } else {
-      this.setBrain(new NeuralNetwork());
-    }
-
     if (params.group) {
       this.setGroup(params.group);
+      this.setBrain(params.group.brain);
+    } else {
+      if (params.brain) {
+        this.setBrain(params.brain);
+      } else {
+        this.setBrain(new NeuralNetwork());
+      }
     }
 
 
@@ -59,7 +62,7 @@ define(function (require) {
     params: {},
     body: {
       size: 10,
-      fill: '#999',
+      fill: '#996D4A',
     },
     name: {
       width: 3,
@@ -94,8 +97,11 @@ define(function (require) {
   _class.prototype.update  = update;
   _class.prototype.destroy = destroy;
 
-  _class.prototype.eat             = eat;
-  _class.prototype.incrementScore  = incrementScore;
+  _class.prototype.eat              = eat;
+  _class.prototype.incrementScore   = incrementScore;
+  _class.prototype.resetScore       = resetScore;
+  _class.prototype.incrementSatiety = incrementSatiety;
+  _class.prototype.decrementSatiety = decrementSatiety;
 
   _class.prototype.normalizeData   = normalizeData;
   _class.prototype.denormalizeData = denormalizeData;
@@ -122,6 +128,8 @@ define(function (require) {
     var angle       = this.angle();
     var nearFood    = this.getNearFood();
     var angleToFood = 0;
+
+    // this.decrementSatiety(this._starveCoeff);
 
     if (this.hasCollision(nearFood)){
       this.eat(nearFood);
@@ -156,6 +164,7 @@ define(function (require) {
       isSeeFood      : !!nearFood,
       angleToFood    : angleToFood,
       distanceToFood : this.distanceTo(nearFood),
+      // satiety        : this._satiety,
     };
 
     var normalisedData   = this.normalizeData(rawData);
@@ -179,6 +188,7 @@ define(function (require) {
     // this.brain.putSignalToNeuron(0, dataObj.isSeeFood);
     // this.brain.putSignalToNeuron(1, dataObj.angleToFood);
     // this.brain.putSignalToNeuron(2, dataObj.distanceToFood);
+    // this.brain.activate();
     return this.brain.activate(dataObj);
   }
 
@@ -188,6 +198,31 @@ define(function (require) {
     return {
       angle: this.brain.getAfterActivationSignal(0), 
       speed: this.brain.getAfterActivationSignal(1),
+    };
+  }
+
+
+  
+  function normalizeData(data){
+    if (data.distanceToFood === Infinity) data.distanceToFood = 0;
+
+    return {
+      isSeeFood      : !!data.isSeeFood ? 1 : 0, 
+      angleToFood    : 1/360 * data.angleToFood, 
+      distanceToFood : data.distanceToFood === 0 ? 0 : 1 / data.distanceToFood, 
+      // satiety        : data.satiety, 
+    };
+  }
+
+
+  
+  function denormalizeData(data) {
+    if (!_isNum(data.angle)) data.angle = 0;
+    if (!_isNum(data.speed)) data.speed = 0;
+
+    return {
+      angle: data.angle / (1/360), 
+      speed: data.speed < 0 ? 0 : data.speed * this.DEFAULT.SPEED_MAX, 
     };
   }
 
@@ -269,27 +304,6 @@ define(function (require) {
 
     var minKey = Math.min.apply(Math, Object.keys(resultList));
     return resultList[minKey] || null;
-  }
-
-
-  
-  function normalizeData(data){
-    if (data.distanceToFood === Infinity) data.distanceToFood = 0;
-
-    return {
-      isSeeFood      : !!data.isSeeFood ? 1 : 0, 
-      angleToFood    : 1/360 * data.angleToFood, 
-      distanceToFood : data.distanceToFood === 0 ? 0 : 1 / data.distanceToFood, 
-    };
-  }
-
-
-  
-  function denormalizeData(data){
-    return {
-      angle: data.angle / (1/360), 
-      speed: data.speed * this.DEFAULT.SPEED_MAX, 
-    };
   }
 
 
@@ -429,12 +443,15 @@ define(function (require) {
   }
 
 
+
   function eat(item) {
     if (!item) return undefined;
     item.destroy();
     this.speed(0);
     this.incrementScore();
+    // this.incrementSatiety(0.5);
   }
+
 
 
   function incrementScore() {
@@ -445,6 +462,31 @@ define(function (require) {
       this.group.incrementScore();
     }
   }
+
+
+  function resetScore() {
+    this._score = 0;
+    this.$element.get(2).text(new String(this._score));
+  }
+
+
+
+  // TODO: not in use
+  function incrementSatiety(value) {
+    this._satiety += value;
+    if (this._satiety > 1) this._satiety = 1;
+    this.$element.get(2).text(new String(Number(this._satiety).toFixed(2)));
+  }
+
+
+
+  // TODO: not in use
+  function decrementSatiety(value) {
+    this._satiety -= value;
+    if (this._satiety < 0) this._satiety = 0;
+    this.$element.get(2).text(new String(Number(this._satiety).toFixed(2)));
+  }
+
 
 
   function distanceTo(item) {

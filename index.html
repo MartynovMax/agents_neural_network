@@ -1,8 +1,7 @@
 <html>
-
   <head>
     <title>
-        Agents NN
+      Agents NN
     </title>
     
     <!-- dependencies-css:css -->
@@ -17,32 +16,53 @@
   <body ng-app="AngularApp" style="margin: 10px;">
   
     <div style="height: 300px;">
-        <app-canvas handler-get-groups="handlers.getGroups"
-                    handler-export="handlers.export">
-        </app-canvas>
+      <app-canvas handler-get-groups="handlers.getGroups"
+                  handler-export="handlers.export"
+                  handler-new-population="handlers.newPopulation">
+      </app-canvas>
     </div>
 
     <div>
-        <h4>
-            Controls:
-        </h4>
+      <h4>
+        Controls:
+      </h4>
 
-        <button ng-click="getGroups()">
-            Get groups
-        </button>
+<!--       <button ng-click="getGroups()">
+        Get groups
+      </button>
+      <br>
+      <br>
+ -->      
+<!--       <button ng-click="handlers.export('json')">
+        Export groups to JSON
+      </button>
+      <br>
+      <br>
+ -->
+      <button ng-click="exportBestBrain()">
+        Export Best Brain
+      </button>
+      <br>
+      <br>
 
-        <br>
-        <br>
+<!--       <button ng-click="exportBrainFirstAgent()">
+        Export First Agent Brain
+      </button>
+      <br>
+      <br> -->
 
-        <button ng-click="handlers.export('json')">
-            Export groups to JSON
-        </button>
-
+      <button ng-click="handlers.newPopulation()">
+        New Population
+      </button>
+      <br>
+      <br>
     </div>
 
 
     <script src="node_modules/angular/angular.min.js"></script>
+
     <!-- dependencies-js:js -->
+    <script src="node_modules/lodash/lodash.js"></script>
     <script src="node_modules/svg.js/dist/svg.min.js"></script>
     <script src="node_modules/svg.draggable.js/dist/svg.draggable.min.js"></script>
     <script src="node_modules/svg.path.js/svg.path.min.js"></script>

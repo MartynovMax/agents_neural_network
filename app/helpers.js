@@ -12,6 +12,7 @@
   _window._toDegrees     = _toDegrees;
   _window._toRadians     = _toRadians;
   _window._randomInteger = _randomInteger;
+  _window._randomFloat   = _randomFloat;
   _window.log            = _window.console.log.bind(_window.console);
   _window._rotatePoint   = _rotatePoint;
   _window._isPointInPoly = _isPointInPoly;
@@ -123,7 +124,7 @@
 
 
   function _isNum(item) {
-    return typeof item === 'number';
+    return typeof item === 'number' && !isNaN(item);
   }
 
 
@@ -148,8 +149,13 @@
 
 
   function _randomInteger(min, max) {
-    var rand = min + Math.random() * (max - min);
-    rand = Math.round(rand);
+    let rand = min + Math.random() * (max - min);
+    return Math.round(rand);
+  }
+
+
+  function _randomFloat(min, max) {
+    let rand = min + Math.random() * (max - min);
     return rand;
   }
 

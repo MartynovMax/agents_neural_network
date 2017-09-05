@@ -12,7 +12,6 @@ define(function (require) {
     this.id           = _generateUID();
     this.map          = map;
     this._entities    = params.entities || [];
-    this._entityClass = params.entityClass || '';
     this.score        = 0;
     this.brain        = undefined;
 
@@ -35,15 +34,18 @@ define(function (require) {
   };
 
 
-  _class.prototype.add        = add;
-  _class.prototype.remove     = remove;
-  _class.prototype.isContains = isContains;
-  _class.prototype.length     = length;
-  _class.prototype.destroy    = destroy;
-  _class.prototype.setBrain   = setBrain;
+  _class.prototype.add              = add;
+  _class.prototype.remove           = remove;
+  _class.prototype.isContains       = isContains;
+  _class.prototype.length           = length;
+  _class.prototype.destroy          = destroy;
+  _class.prototype.getBrainJSON     = getBrainJSON;
+  _class.prototype.setBrain         = setBrain;
+  _class.prototype.setBrainFromJSON = setBrainFromJSON;
 
   _class.prototype.incrementScore = incrementScore;
   _class.prototype.getScore       = getScore;
+  _class.prototype.resetScore     = resetScore;
 
   return _class;
 
@@ -99,6 +101,18 @@ define(function (require) {
 
 
 
+  function setBrainFromJSON(json){
+    this.brain.fromJSON(json);
+  }
+
+
+
+  function getBrainJSON(){
+    return this.brain.toJSON();
+  }
+
+
+
   function incrementScore() {
     // log('Group:' + this.id + ':score', this.score + 1)
     return this.score++;
@@ -108,6 +122,16 @@ define(function (require) {
 
   function getScore() {
     return this.score;
+  }
+
+
+
+  function resetScore() {
+    this.score = 0;
+
+    this._entities.forEach((entity) => {
+      entity.resetScore();
+    });
   }
 
 

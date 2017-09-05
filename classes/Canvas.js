@@ -22,7 +22,11 @@ define(function (require) {
     this.styles        = this.DEFAULT.styles;
     this.map           = undefined;
     this._loopInterval = undefined;
-
+    this._loopCounter  = 0;
+    this._populationCounter = 0;
+    this._populationLastBestScore = 0;
+    this._lastBestBrain = 0;
+    this._isEnableMutations = true;
 
     // coordinates of the cursor
     this._cx = 0;
@@ -48,7 +52,13 @@ define(function (require) {
     CACHE_TABLE_NAME: 'Canvas',
     width: 900,
     height: 500,
-    LOOP_INTERVAL: 40,
+
+    LOOP_INTERVAL: 10,
+    // LOOP_INTERVAL          : 40,
+    NEW_POPULATION_COUNTER : 1000,
+    LOG_POPULATION_NUM     : 1,
+    MUTATION_RATE          : 0.3,
+
     styles: {
       background: '#fff',
       fill: {
@@ -95,6 +105,12 @@ define(function (require) {
   _class.prototype.export      = _export;
   _class.prototype.export_json = export_json;
 
+  _class.prototype.generateNextPopulation = generateNextPopulation;
+  _class.prototype.crossOver              = crossOver;
+  _class.prototype.crossOverDataKey       = crossOverDataKey;
+  _class.prototype.mutateDataKeys         = mutateDataKeys;
+  _class.prototype.mutate                 = mutate;
+
   return _class;
 
 
@@ -134,17 +150,20 @@ define(function (require) {
 
 
   function loopStart() {
-    var LOOP_MAX = Infinity;
-    // var LOOP_MAX = 1;
-    var loopCounter = 0;
+    const LOOP_MAX = Infinity;
+    // const LOOP_MAX = 1;
 
-    this._loopInterval = setInterval(function(){
-      if (loopCounter >= LOOP_MAX) return this.loopStop();
-      if (LOOP_MAX !== Infinity) loopCounter++;
+    this._loopInterval = setInterval(() => {
+      if (this._loopCounter >= LOOP_MAX) return this.loopStop();
+      this._loopCounter++;
 
       __updateAllInArray.call(this, 'Agent');
       __updateAllInArray.call(this, 'Food');
-    }.bind(this), this.DEFAULT.LOOP_INTERVAL);
+
+      if (this._loopCounter % this.DEFAULT.NEW_POPULATION_COUNTER === 0) {
+        this.generateNextPopulation();
+      }
+    }, this.DEFAULT.LOOP_INTERVAL);
   }
 
 
@@ -384,7 +403,7 @@ define(function (require) {
 
 
   function getGroups() {
-    return this.findCollection('Group');
+    return this.map.findCollection('Group');
   }
 
 
@@ -420,5 +439,105 @@ define(function (require) {
   function destroy() {
     log('Canvas.destroy')
   }
+
+
+
+  function generateNextPopulation() {
+    if (!this._isEnableMutations) return undefined;
+
+    var groups = this.getGroups();
+    groups.sort((a, b) => {
+      return b.score - a.score;
+    });
+
+    // best
+    let brainA = groups[0].getBrainJSON();
+    let brainB = groups[1].getBrainJSON();
+
+    if (groups[0].score < this._populationLastBestScore && !!this._lastBestBrain) {
+      log('New Population was dumber than the previous on', this._populationLastBestScore - groups[0].score);
+    } 
+    this._populationCounter++;
+
+    if (this._populationCounter % this.DEFAULT.LOG_POPULATION_NUM === 0) {
+      log('Population', this._populationCounter, groups[0].score);
+    }
+
+
+    let oneBrain     = this.crossOver(brainA, brainB); 
+    let mutatedBrain = this.mutate(oneBrain);
+
+    this._lastBestBrain = mutatedBrain;
+    this._populationLastBestScore = groups[0].score;
+
+    groups.forEach((group) => {
+      let newBrain = this.mutate(this._lastBestBrain); 
+      group.resetScore();
+      group.setBrainFromJSON(newBrain);
+    });
+  }
+
+
+
+  function crossOver(netA, netB) {
+    // Swap (50% prob.)
+    if (Math.random() > 0.5) {
+      var tmp = netA;
+      netA = netB;
+      netB = tmp;
+    }
+
+    // Clone network
+    netA = _.cloneDeep(netA);
+    netB = _.cloneDeep(netB);
+
+    // Cross over data keys
+    this.crossOverDataKey(netA.neurons, netB.neurons, 'bias');
+
+    return netA;
+  }
+
+
+
+  function crossOverDataKey(a, b, key) {
+    var cutLocation = Math.round(a.length * Math.random());
+
+    var tmp;
+    for (var k = cutLocation; k < a.length; k++) {
+      // Swap
+      tmp = a[k][key];
+      a[k][key] = b[k][key];
+      b[k][key] = tmp;
+    }
+  }
+
+
+
+  function mutate(net){
+    let mutationProb = 0.2;
+
+    // Mutate
+    this.mutateDataKeys(net.neurons, 'bias', mutationProb);
+    this.mutateDataKeys(net.connections, 'weight', mutationProb);
+    return net;
+  }
+
+
+  function mutateDataKeys(a, key, mutationRate){
+    for (var k = 0; k < a.length; k++) {
+      // Should mutate?
+      if (Math.random() > mutationRate) {
+        continue;
+      }
+
+      // let newVal = a[k][key] * (Math.random() - 0.5) * 3 + (Math.random() - 0.5);
+      let newVal = _randomFloat(-this.DEFAULT.MUTATION_RATE, this.DEFAULT.MUTATION_RATE);
+
+      // log('?', a[k][key], newVal)
+
+      a[k][key] += newVal;
+    }
+  }
+
 
 });

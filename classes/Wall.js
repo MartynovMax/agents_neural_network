@@ -35,7 +35,7 @@ define(function (require) {
     },
     params: {},
     body: {
-      fill: '#4494AA',
+      fill: '#8C9CAA',
     },
   };
 

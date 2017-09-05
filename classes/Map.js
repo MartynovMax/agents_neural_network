@@ -3,6 +3,7 @@ define(function (require) {
 
   var Food = require('Food');
   var Wall = require('Wall');
+  var NeuralNetwork = require('nn/NeuralNetwork');
 
   // constructor
   function _Map(_canvas, attrs, params) {
@@ -123,6 +124,10 @@ define(function (require) {
           entity.params.entities     = undefined;
           entity.params.entityClass  = undefined;
 
+          if (window.masterBrain) {
+            entity.params.brain = new NeuralNetwork(window.masterBrain);
+          }
+
           var createdEntity = new entityConstructor(
             self, 
             entity.attrs, 
@@ -233,8 +238,9 @@ define(function (require) {
 
 
 
-  function createFood() {
+  function createFood(params) {
     var padding = 50;
+    var params  = params || {};
 
     return new Food(
       this, 
@@ -242,7 +248,8 @@ define(function (require) {
         x     : _randomInteger(padding, this.width() - padding),
         y     : _randomInteger(padding, this.height() - padding),
         speed : 1
-      }
+      },
+      params
     );
   } 
 

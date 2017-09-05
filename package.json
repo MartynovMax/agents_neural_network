@@ -15,6 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "angular": "^1.5.9",
+    "lodash": "^4.17.4",
     "save-svg-as-png": "^1.0.3",
     "svg-pan-zoom": "git://github.com/ariutta/svg-pan-zoom",
     "svg.draggable.js": "^2.2.0",

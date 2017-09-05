@@ -148,7 +148,9 @@ define(function (require) {
     this.$element.remove();
     this.$element.fire(this.EVENTS.DESTROY);
     this.map.removeEl(this);
-    this.map.createFood();
+    this.map.createFood({
+      isAllowMove: this._isAllowMove,
+    });
   }
 
 

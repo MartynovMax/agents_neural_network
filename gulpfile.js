@@ -41,6 +41,7 @@ var PATHS = {
   ],
   DEPENDENCIES: {
     JS: [
+      'node_modules/lodash/lodash.js',
       'node_modules/svg.js/dist/svg.min.js',
       'node_modules/svg.draggable.js/dist/svg.draggable.min.js',
       'node_modules/svg.path.js/svg.path.min.js',
