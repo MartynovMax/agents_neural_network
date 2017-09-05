@@ -1,6 +1,13 @@
 Agents Neural Network
 ===================
 
+![Screenshot](/screenshots/screenshot_1.png?raw=true "Screenshot")
+
+Used technologies:
+- Angular.js 1.x
+- SVG
+- Synaptic.js
+
 ---
 # Development
 
