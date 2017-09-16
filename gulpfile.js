@@ -12,7 +12,7 @@ var bump      = require('gulp-bump');
 var args      = require('yargs').argv;
 var fs        = require('fs');
 var replace   = require('gulp-replace');
-// var git       = require('gulp-git');
+/* var git       = require('gulp-git'); */
 
 
 
@@ -73,7 +73,7 @@ gulp.task('bump'   , task_bump);
 gulp.task('bundle' , task_bundle);
 gulp.task('build'  , ['bump', 'bundle']);
 
-// launch local server
+/* launch local server */
 gulp.task('connect', task_connect);
 gulp.task('watch', task_watch);
 gulp.task('reload_html', task_reload_html) 

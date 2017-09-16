@@ -1,6 +1,9 @@
 Agents Neural Network
 ===================
 
+# This is under development
+
+
 ![Screenshot](/screenshots/screenshot_1.png?raw=true "Screenshot")
 
 Used technologies:
@@ -14,6 +17,7 @@ Used technologies:
 ### Install:
 
 ```
+nvm use &&
 npm install
 ```
 

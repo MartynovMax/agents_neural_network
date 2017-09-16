@@ -14,15 +14,15 @@
   "author": "Martynov Max",
   "license": "ISC",
   "dependencies": {
-    "angular": "^1.5.9",
-    "save-svg-as-png": "^1.0.3",
+    "angular": "1.5.9",
+    "save-svg-as-png": "1.0.3",
     "svg-pan-zoom": "git://github.com/ariutta/svg-pan-zoom",
-    "svg.draggable.js": "^2.2.0",
-    "svg.easing.js": "^2.0.0",
-    "svg.js": "^2.3.6",
-    "svg.path.js": "^0.6.2",
-    "svg.resize.js": "^1.4.0",
-    "svg.select.js": "^2.0.3",
+    "svg.draggable.js": "2.2.0",
+    "svg.easing.js": "2.0.0",
+    "svg.js": "2.3.6",
+    "svg.path.js": "0.6.2",
+    "svg.resize.js": "1.4.0",
+    "svg.select.js": "2.0.3",
     "synaptic": "^1.0.8"
   },
   "devDependencies": {
