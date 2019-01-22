@@ -97,11 +97,11 @@ define(function (require) {
   _class.prototype.eat             = eat;
   _class.prototype.incrementScore  = incrementScore;
 
-  _class.prototype.normalizeData   = normalizeData;
-  _class.prototype.denormalizeData = denormalizeData;
-  _class.prototype.activateBrain   = activateBrain;
-  _class.prototype.getBrainSignal  = getBrainSignal;
-  _class.prototype.setBrain        = setBrain;
+  _class.prototype.normalizeBrainData   = normalizeBrainData;
+  _class.prototype.denormalizeBrainData = denormalizeBrainData;
+  _class.prototype.activateBrain        = activateBrain;
+  _class.prototype.getBrainSignal       = getBrainSignal;
+  _class.prototype.setBrain             = setBrain;
 
   _class.prototype.setGroup        = setGroup;
   _class.prototype.getGroup        = getGroup;
@@ -158,10 +158,11 @@ define(function (require) {
       distanceToFood : this.distanceTo(nearFood),
     };
 
-    var normalisedData   = this.normalizeData(rawData);
+
+    var normalisedData   = this.normalizeBrainData(rawData);
     var result = this.activateBrain(normalisedData);
     // var result = this.getBrainSignal();
-    var denormalisedData = this.denormalizeData(result);
+    var denormalisedData = this.denormalizeBrainData(result);
 
     // log('\nrawData', rawData)
     // log('normalisedData', normalisedData)
@@ -273,19 +274,19 @@ define(function (require) {
 
 
   
-  function normalizeData(data){
+  function normalizeBrainData(data){
     if (data.distanceToFood === Infinity) data.distanceToFood = 0;
 
     return {
       isSeeFood      : !!data.isSeeFood ? 1 : 0, 
-      angleToFood    : 1/360 * data.angleToFood, 
+      angleToFood    : (1/360 * data.angleToFood) || 0, 
       distanceToFood : data.distanceToFood === 0 ? 0 : 1 / data.distanceToFood, 
     };
   }
 
 
   
-  function denormalizeData(data){
+  function denormalizeBrainData(data){
     return {
       angle: data.angle / (1/360), 
       speed: data.speed * this.DEFAULT.SPEED_MAX, 

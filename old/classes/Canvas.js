@@ -138,6 +138,8 @@ define(function (require) {
     // var LOOP_MAX = 1;
     var loopCounter = 0;
 
+
+    // TODO: replace setInterval on requestAnimationFrame
     this._loopInterval = setInterval(function(){
       if (loopCounter >= LOOP_MAX) return this.loopStop();
       if (LOOP_MAX !== Infinity) loopCounter++;
@@ -384,7 +386,7 @@ define(function (require) {
 
 
   function getGroups() {
-    return this.findCollection('Group');
+    return this.map.findCollection('Group');
   }
 
 

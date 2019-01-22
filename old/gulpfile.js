@@ -50,6 +50,7 @@ var PATHS = {
       'node_modules/svg-pan-zoom/dist/svg-pan-zoom.min.js',
       'node_modules/save-svg-as-png/saveSvgAsPng.js',
       'node_modules/synaptic/dist/synaptic.js',
+      'node_modules/neataptic/dist/neataptic.js',
       'app/vendor/svg.math.js/svg.math.min.js',
       'app/vendor/svg.foreignobject.js/svg.foreignobject.js',
       'app/vendor/line-circle-collision/index.js',

@@ -143,13 +143,13 @@ define(function (require) {
     ]);
 
 
-    this.perceptron.propagate(
-      this.DEFAULT.LEARNING_RATE, 
-      [
-        dataObj.angleToFood,
-        0.3,
-      ]
-    );
+    // this.perceptron.propagate(
+    //   this.DEFAULT.LEARNING_RATE, 
+    //   [
+    //     dataObj.angleToFood,
+    //     0.3,
+    //   ]
+    // );
 
     return {
       angle: result[0],    

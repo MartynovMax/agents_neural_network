@@ -1,69 +1,12 @@
+<!DOCTYPE html>
 <html>
-
   <head>
-    <title>
-        Agents NN
-    </title>
-    
-    <!-- dependencies-css:css -->
-    <link rel="stylesheet" href="node_modules/svg.select.js/dist/svg.min.css">
-    <!-- endinject -->
-    
-    <!-- styles:css -->
-    <link rel="stylesheet" href="app/styles/app.css">
-    <!-- endinject -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>agents-neural-network</title>
   </head>
-
-  <body ng-app="AngularApp" style="margin: 10px;">
-  
-    <div style="height: 300px;">
-        <app-canvas handler-get-groups="handlers.getGroups"
-                    handler-export="handlers.export">
-        </app-canvas>
-    </div>
-
-    <div>
-        <h4>
-            Controls:
-        </h4>
-
-        <button ng-click="getGroups()">
-            Get groups
-        </button>
-
-        <br>
-        <br>
-
-        <button ng-click="handlers.export('json')">
-            Export groups to JSON
-        </button>
-
-    </div>
-
-
-    <script src="node_modules/angular/angular.min.js"></script>
-    <!-- dependencies-js:js -->
-    <script src="node_modules/svg.js/dist/svg.min.js"></script>
-    <script src="node_modules/svg.draggable.js/dist/svg.draggable.min.js"></script>
-    <script src="node_modules/svg.path.js/svg.path.min.js"></script>
-    <script src="node_modules/svg.select.js/dist/svg.select.min.js"></script>
-    <script src="node_modules/svg.resize.js/dist/svg.resize.min.js"></script>
-    <script src="node_modules/svg.easing.js/dist/svg.easing.min.js"></script>
-    <script src="node_modules/svg-pan-zoom/dist/svg-pan-zoom.min.js"></script>
-    <script src="node_modules/save-svg-as-png/saveSvgAsPng.js"></script>
-    <script src="node_modules/synaptic/dist/synaptic.js"></script>
-    <script src="app/vendor/svg.math.js/svg.math.min.js"></script>
-    <script src="app/vendor/svg.foreignobject.js/svg.foreignobject.js"></script>
-    <script src="app/vendor/line-circle-collision/index.js"></script>
-    <script src="app/vendor/requirejs/require.js"></script>
-    <!-- endinject -->
-
-    <!-- components:js -->
-    <script src="app/app.js"></script>
-    <script src="app/helpers.js"></script>
-    <script src="app/components/appCanvas/appCanvas.js"></script>
-    <script src="classes/main.js"></script>
-    <!-- endinject -->
+  <body>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
   </body>
-
 </html>

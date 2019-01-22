@@ -29,7 +29,7 @@
     this.getGroups    = getGroups;
     this.export       = _export;
     
-    this.init();
+    // this.init();
 
 
     // this.exampleTrain();
@@ -43,8 +43,8 @@
       }.bind(this));
 
 
-      _initOneAgent();
-      // _initMultipleAgents();
+      // _initOneAgent();
+      _initMultipleAgents();
     } 
 
 
@@ -69,7 +69,7 @@
           {
             map: {
               params: {
-                isRandomWalls: true,
+                // isRandomWalls: true,
                 entities: data,
               },
             },
