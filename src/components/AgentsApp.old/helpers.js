@@ -5,7 +5,6 @@ export default () => {}
 (function(_window){
   'use strict';
 
-  _window.Math2PI = Math.PI * 2;
   _window._extendClass = _extendClass;
   _window._eachSeries = _eachSeries;
   _window._flatten = _flatten;
@@ -16,10 +15,7 @@ export default () => {}
   _window._isArray = _isArray;
   _window._toDegrees = _toDegrees;
   _window._toRadians = _toRadians;
-  _window._angleBetweenPoints = _angleBetweenPoints;
-  _window._distanceBetweenPoints = _distanceBetweenPoints;
   _window._randomInteger = _randomInteger;
-  _window._randomFloat = _randomFloat;
   _window.log = _window.console.log.bind(_window.console);
   _window._rotatePoint = _rotatePoint;
   _window._isPointInPoly = _isPointInPoly;
@@ -27,7 +23,6 @@ export default () => {}
   _window._isPointInRect = _isPointInRect;
   _window._isPointInsideCircleSector = _isPointInsideCircleSector;
   _window._generateUID = _generateUID;
-  _window.Vec2 = Vec2;
 
 
 
@@ -150,31 +145,14 @@ export default () => {}
 
 
   function _toDegrees(angle) {
-    return angle * 180 / Math.PI
+    return angle * (180 / Math.PI);
   }
 
 
   function _toRadians(angle) {
-    return angle * Math.PI / 180
+    return angle * (Math.PI / 180);
   }
 
-  // angle in radians
-  function _angleBetweenPoints (p1, p2) {
-    let angle = Math.atan2(p2.y - p1.y, p2.x - p1.x)
-    angle = angle < 0 ? (Math.PI*2) + angle : angle
-    return angle
-  }
-
-
-  function _distanceBetweenPoints (p1, p2) {
-    return Math.sqrt(Math.pow((p1.x - p2.x), 2) + Math.pow((p1.y - p2.y), 2))
-  }
-
-
-  function _randomFloat(min, max) {
-    var rand = min + Math.random() * (max - min);
-    return rand;
-  }
 
   function _randomInteger(min, max) {
     var rand = min + Math.random() * (max - min);
@@ -281,21 +259,5 @@ export default () => {}
     return r() + '-' + r() + '-' + r() + '-' + r();
   }
 
-
-  function Vec2(x, y) {
-    if (!(this instanceof Vec2)) {
-      return new Vec2(x, y);
-    }
-    if (typeof x === 'undefined') {
-      this.x = 0;
-      this.y = 0;
-    } else if (typeof x === 'object') {
-      this.x = x.x;
-      this.y = x.y;
-    } else {
-      this.x = x;
-      this.y = y;
-    }
-  }
 
 })(window)

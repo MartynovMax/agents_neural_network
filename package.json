@@ -16,8 +16,11 @@
   },
   "dependencies": {
     "@tensorflow/tfjs": "^0.14.2",
+    "eventemitter3": "^3.1.0",
     "konva": "^2.6.0",
+    "matter-js": "^0.14.2",
     "planck-js": "^0.3.0-rc.2",
+    "poly-decomp": "^0.3.0",
     "stage-js": "^0.8.10",
     "vue": "^2.5.2"
   },

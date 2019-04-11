@@ -1,24 +1,19 @@
 /* eslint-disable */
-import planck from 'planck-js/dist/planck-with-testbed.js'
-import World from './World'
-import Food from './Food'
-import Agent from './Agent'
 import Generation from '@/NeuroEvolution/Generation'
+import NeuralNetwork from '@/NeuroEvolution/NeuralNetwork'
+import World from './World';
+import Agent from './Agent';
+import Food from './Food';
 
-// import planck from './testbed.js'
-// import Konva from 'konva'
-// import planck from 'planck-js'
 
-const pl = planck
-const Vec2 = pl.Vec2
+// const AGENTS_NUMBER = 10;
+// const FOODS_NUMBER = 30;
 
-const AGENTS = []
-// var AGENTS_NUMBER = 50;
-// var AGENTS_NUMBER = 10;
-var AGENTS_NUMBER = 1;
-// var FOOD_NUMBER = 0;
-var FOOD_NUMBER = 50;
+// const AGENTS_NUMBER = 5;
+// const FOODS_NUMBER = 20;
 
+const AGENTS_NUMBER = 5;
+const FOODS_NUMBER = 100;
 
 // in sec
 const generationPeriod = 20;
@@ -26,18 +21,70 @@ let generation = new Generation(AGENTS_NUMBER);
 let settled = false;
 
 
+
 export default function () {
-  planck.testbed('Tumbler', init)
+  init()
+}
+
+
+function init () {
+  const world = new World();
+
+  const worldWidth = world.width
+  const worldHeight = world.height
+
+  const PADDING = 60
+
+  for (let i = 0; i < FOODS_NUMBER; i++) {
+    new Food({
+      world,
+      position: {
+        x: _randomInteger(PADDING, worldWidth - PADDING),
+        y: _randomInteger(PADDING, worldHeight - PADDING),
+      },
+      // position: {
+      //   x: worldWidth/2,
+      //   y: worldHeight/2,
+      // },
+      // position: {
+      //   x: worldWidth/2 + 20,
+      //   y: worldHeight/2 - 20,
+      // }
+    })
+  }
+
+  // const brain = new NeuralNetwork(3, 100, 2)
+
+  for (let i = 0; i < AGENTS_NUMBER; i++) {
+    const agent = new Agent({
+      world,
+      // brain,
+      position: {
+        x: _randomInteger(PADDING, worldWidth - PADDING),
+        y: _randomInteger(PADDING, worldHeight - PADDING),
+      },
+      // position: {
+      //   x: worldWidth/2,
+      //   y: worldHeight/2,
+      // },
+      angle: _toRadians(_randomInteger(0, 360)),
+      // angle: _toRadians(180),
+      // angle: 0,
+    })
+
+    generation.addSpecies(agent);
+  }
+
+
+  startLoop(world);
 }
 
 
 
-function startLoop () {
-  // var i = 0
 
+function startLoop (world) {
   function loop () {
-    const step = 10
-
+    const step = 0.2
 
     // generation.species.forEach((creature, index) => {
     //   let txt = '';
@@ -51,90 +98,22 @@ function startLoop () {
 
 
     for (let agent of generation.species) {
-      // console.log('agent: ', agent)
-      // const v = agent.getLinearVelocity()
-      // console.log('v: ', v)
-      // const data = getAgentData(agent)
-      // const x = data.x + pl.Math.random(-step, step)
-      // const y = data.y + pl.Math.random(-step, step)
-
-
-      agent.applyAngularForce(pl.Math.random(-step/5, step/5))
-      agent.applyForce(pl.Math.random(-step, step))
-      const food = agent.getNearFood()
-      console.log('food: ', food)
-
-      // console.log('agent: ', agent.m_linearVelocity)
-
-      // i++
+      // agent.applyAngularForce(_randomFloat(-step * 0.5, step * 0.5))
+      // agent.applyForce(step / 100)
+      agent.update()
     }
 
     window.requestAnimationFrame(loop)
   }
 
+
   window.requestAnimationFrame(loop)
-}
 
 
 
-function init (testbed) {
-  testbed.hz = 40;
-
-  const world = new World()
-
-  const worldWidth = world.width
-  const worldHeight = world.height
-
-  const agentWidth = Agent.prototype.width
-  const agentHeight = Agent.prototype.height
-
-  for (let i = 0; i < AGENTS_NUMBER; i++) {
-    const agent = new Agent({
-      id: i,
-      world,
-      // position: {
-      //   x: pl.Math.random(-worldWidth + agentWidth, worldWidth - agentWidth),
-      //   y: pl.Math.random(-worldHeight + agentHeight, worldHeight - agentHeight),
-      // },
-      angle: _toRadians(pl.Math.random(0, 360)),
-      position: {
-        x: 0,
-        y: 0,
-      },
-      // angle: 0
-    })
-
-    const food = agent.getNearFood()
-    console.log('food: ', food)
-
-    generation.addSpecies(agent);
-  }
-
-  for (let i = 0; i < FOOD_NUMBER; i++) {
-    new Food({
-      world,
-      position: {
-        x: pl.Math.random(-worldWidth + agentWidth, worldWidth - agentWidth),
-        y: pl.Math.random(-worldHeight + agentHeight, worldHeight - agentHeight),
-      },
-      angle: _toRadians(pl.Math.random(0, 360))
-    })
-  }
-
-  startLoop();
-
-
-  // setTimeout(() => {
-  //   generation.evolve();
-  // }, 500)
-
-	// Restart Generation after 5 seconds
+  // Restart Generation after 5 seconds
 	// setInterval(() => {
-	// 	generation.evolve();
-	// 	console.log(generation.avg_score);
-	// 	settled = false;
-	// }, generationPeriod * 1000);
-
-
-  return world.$body
+	// 	generation.evolve()
+	// 	settled = false
+	// }, generationPeriod * 1000)
 }

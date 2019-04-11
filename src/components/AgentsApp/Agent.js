@@ -1,33 +1,36 @@
 /* eslint-disable */
 import * as tf from '@tensorflow/tfjs';
-import planck from 'planck-js/dist/planck-with-testbed.js'
 import NeuralNetwork from '@/NeuroEvolution/NeuralNetwork'
 import { random, randomGaussian } from './random'
+import Matter from 'matter-js'
 
-const pl = planck
-const Vec2 = pl.Vec2
+
+const STATUSES = ['searching', 'see_food']
+
+const MAX_FORCE = 0.005
+const MAX_ANGULAR_FORCE = 0.05
 
 
 export default class Agent {
   constructor (data) {
     this.world = data.world
 
-    // kg = 10
-    // kg = 80
-
-    this.id = data.id || _randomInteger(1e7, 1e8 - 1)
+    this.id = data.id || _generateUID()
     this.type = 'agent'
     this.score = 0
     this.fitness = 0
     this.parents = []
     this.startParams = data || {}
 
-    this.visionAngle  = 110
-    this.visionRadius = 5
+    this._status = STATUSES[0]
+
+    // radians
+    this.visionAngle = _toRadians(110)
+    this.visionRadius = 70
     this._visionArcPath = []
 
     // this.colors = []
-    this.brain = new NeuralNetwork(4, 100, 2)
+    this.brain = data.brain || new NeuralNetwork(3, 10, 2)
 
     this.$body = null
 
@@ -40,7 +43,7 @@ export default class Agent {
 
   get position () {
     if (!this.$body) return Vec2()
-    return this.$body.getPosition()
+    return this.$body.position
   }
 
   /**
@@ -48,21 +51,21 @@ export default class Agent {
    */
   set position (vec) {
     if (!this.$body) return
-    this.$body.setPosition(vec)
+    Matter.Body.setPosition(this.$body, vec)
   }
 
 
   get width () {
-    return 0.5
+    return 10
   }
   get height () {
-    return 0.5
+    return this.width
   }
 
 
   get angle () {
     if (!this.$body) return -1
-    return this.$body.getAngle()
+    return this.$body.angle
   }
 
   /**
@@ -70,113 +73,153 @@ export default class Agent {
    */
   set angle (val) {
     if (!this.$body) return
-    this.$body.setAngle(val);
+    Matter.Body.setAngle(this.$body, val)
+  }
+
+
+  get status () {
+    return this._status
+  }
+  set status (val) {
+    if (this._status === val) return
+    if (!val || STATUSES.indexOf(val) === -1) {
+      this._status = STATUSES[0]
+      return
+    }
+
+    this._status = val
   }
 
 
   init () {
-    var shape = pl.Box(this.width, this.height);
-    // var shape = pl.Circle(width);
-    // var shape = pl.Polygon([
-    //   Vec2(-width, -height),
-    //   Vec2(0, -height / 5),
-    //   Vec2(width, -height),
-    //   Vec2(0, height / 2)
-    // ]);
+    const position = Vec2(this.startParams.position)
 
-    const fixtureDef = {
-      // userData: this,
-      friction: 0.1,
-      restitution: 0.1,
-      // density: 1000 / Math.sqrt(data.kg)
-      density: 50,
-    }
-
-    const $body = this.world.$body.createDynamicBody({
-      linearDamping: 1.5,
-      angularDamping: 1
-    });
-
-    $body.createFixture(shape, fixtureDef, 1);
-
+    const rect = Matter.Bodies.circle(
+      position.x,
+      position.y,
+      this.width,
+      {
+        id: this.id,
+        label: this.type,
+        frictionAir: 0.01
+      }
+    );
 
     this._visionArcPath = _createVisionArcPath(
       0,
       0,
       this.visionRadius,
-      360 - this.visionAngle / 2,
+      _toRadians(360) - this.visionAngle / 2,
       this.visionAngle / 2
     )
-    $body.createFixture(pl.Polygon(this._visionArcPath), {
-      filterGroupIndex: -1
-    }, 1)
 
+    Matter.Body.setMass(rect, 50)
 
-    this.$body = $body
+    this.$body = rect;
 
     this.angle = this.startParams.angle || 0
-    this.position = this.startParams.position || Vec2()
   }
 
 
-  applyForce (force) {
-    var f = this.$body.getWorldVector(Vec2(0.0, -1.0));
-    var p = this.$body.getWorldPoint(Vec2(0.0, 2.0));
-    this.$body.applyLinearImpulse(f, p, true);
+  draw () {
+    const ctx = this.world.canvas.getContext('2d')
+
+    const x = this.position.x
+    const y = this.position.y
+    let pathArea = this._visionArcPath
+
+    const baseX = pathArea[0].x + x
+    const baseY = pathArea[0].y + y
+
+    pathArea = pathArea.map((point) => {
+      return _rotatePoint(
+        point.x + x,
+        point.y + y,
+        baseX,
+        baseY,
+        this.angle
+      );
+    });
+
+    ctx.beginPath();
+    ctx.moveTo(pathArea[0].x, pathArea[0].y);
+
+    for (var i = 1; i < pathArea.length; i++) {
+      ctx.lineTo(pathArea[i].x, pathArea[i].y);
+    }
+
+    ctx.lineWidth = 1;
+    // ctx.strokeStyle = '#5a5a5a';
+    ctx.strokeStyle = this.status === 'see_food' ? 'red' : '#5a5a5a';
+    ctx.stroke();
+  }
+
+
+  /**
+   * @param {number} impulse - [0; 1]
+   */
+  applyForce (impulse) {
+    if (impulse < 0) impulse = 0
+    if (impulse > MAX_FORCE) impulse = MAX_FORCE
+
+    Matter.Body.applyForce(this.$body, this.position, {
+      x: Math.cos(this.angle) * impulse,
+      y: Math.sin(this.angle) * impulse
+    });
   }
 
   /**
-   * @param {number} impulse
+   * @param {number} impulse - [-1; 1]
    */
   applyAngularForce (impulse) {
-    this.$body.applyAngularImpulse(impulse, true)
+    if (Math.abs(impulse) > MAX_ANGULAR_FORCE) {
+      impulse = Math.sign(impulse) * MAX_ANGULAR_FORCE
+    }
+
+    Matter.Body.setAngularVelocity(this.$body, impulse);
   }
 
 
   getNearFood() {
-    const x          = this.position.x
-    const y          = this.position.y
-    const angle      = this.angle
+    const x = this.position.x
+    const y = this.position.y
     const resultList = {}
 
-    let pathArea = this._visionArcPath
-    pathArea = pathArea.map((_point) => {
-      return _rotatePoint(
-        pathArea[0].x + x,
-        pathArea[0].y + y,
-        _point.x + x,
-        _point.y + y,
-        angle
-      );
-    });
+    const foodItems = this.world.getCollectionSubjects('food')
 
+    for (let item of foodItems) {
+      if (!item) continue
 
-    // draw path
-    // const $body = this.world.$body.createDynamicBody({
-    //   linearDamping: 1.5,
-    //   angularDamping: 1
-    // });
-    // $body.createFixture(pl.Polygon(pathArea), {
-    //   filterGroupIndex: -1
-    // }, 1)
-    // setTimeout(() => this.world.$body.destroyBody($body), 50)
+      // const isPointInRect = _isPointInRect(
+      //   item.position,
+      //   {
+      //     x1: x - this.visionRadius,
+      //     y1: y - this.visionRadius,
+      //     x2: x + this.visionRadius,
+      //     y2: y + this.visionRadius
+      //   }
+      // )
 
+      // if (!isPointInRect) continue
 
-    this.world.getCollectionSubjects('food')
-      .filter((item) => {
-        if (!item) return
+      const isPointInsideCircleSector = _isPointInsideCircleSector(
+        item.position,
+        {x, y},
+        this.visionRadius,
+        this.angle - this.visionAngle / 2,
+        this.angle + this.visionAngle / 2
+      )
 
-        const item_x = item.position.x
-        const item_y = item.position.y
-        const isInArea = _isPointInPoly(pathArea, item.position);
+      if (!isPointInsideCircleSector) continue
 
-        if (isInArea) {
-          const dist = Math.sqrt(Math.pow((x - item_x), 2) + Math.pow((y - item_y), 2));
-          resultList[dist] = item;
-        }
-      })
+      const dist = Math.sqrt(
+        Math.pow(x - item.position.x, 2) + Math.pow(y - item.position.y, 2)
+      )
 
-    const minKey = Math.min.apply(Math, Object.keys(resultList));
+      resultList[dist] = item;
+    }
+
+    const minKey = Math.min.apply(Math, Object.keys(resultList))
     return resultList[minKey] || null;
   }
 
@@ -195,48 +238,48 @@ export default class Agent {
 		return newEntity;
   }
 
-  crossover(partner) {
-    let parentA_in_dna = this.brain.input_weights.dataSync();
-    let parentA_out_dna = this.brain.output_weights.dataSync();
-    let parentB_in_dna = partner.brain.input_weights.dataSync();
-    let parentB_out_dna = partner.brain.output_weights.dataSync();
+  // crossover (partner) {
+  //   let parentA_in_dna = this.brain.input_weights.dataSync();
+  //   let parentA_out_dna = this.brain.output_weights.dataSync();
+  //   let parentB_in_dna = partner.brain.input_weights.dataSync();
+  //   let parentB_out_dna = partner.brain.output_weights.dataSync();
 
-    let mid = Math.floor(Math.random() * parentA_in_dna.length);
-    let child_in_dna = [...parentA_in_dna.slice(0, mid), ...parentB_in_dna.slice(mid, parentB_in_dna.length)];
-    let child_out_dna = [...parentA_out_dna.slice(0, mid), ...parentB_out_dna.slice(mid, parentB_out_dna.length)];
+  //   let mid = Math.floor(Math.random() * parentA_in_dna.length);
+  //   let child_in_dna = [...parentA_in_dna.slice(0, mid), ...parentB_in_dna.slice(mid, parentB_in_dna.length)];
+  //   let child_out_dna = [...parentA_out_dna.slice(0, mid), ...parentB_out_dna.slice(mid, parentB_out_dna.length)];
 
-    let child = this.clone();
-    let input_shape = this.brain.input_weights.shape;
-    let output_shape = this.brain.output_weights.shape;
+  //   let child = this.clone();
+  //   let input_shape = this.brain.input_weights.shape;
+  //   let output_shape = this.brain.output_weights.shape;
 
-    child.brain.dispose();
+  //   child.brain.dispose();
 
-    child.brain.input_weights = tf.tensor(child_in_dna, input_shape);
-    child.brain.output_weights = tf.tensor(child_out_dna, output_shape);
+  //   child.brain.input_weights = tf.tensor(child_in_dna, input_shape);
+  //   child.brain.output_weights = tf.tensor(child_out_dna, output_shape);
 
-    return child;
-  }
+  //   return child;
+  // }
 
-  mutate() {
-    function fn(x) {
-      if (random(1) < 0.05) {
-        let offset = randomGaussian() * 0.5;
-        let newx = x + offset;
-        return newx;
-      }
-      return x;
-    }
+  // mutate() {
+  //   function fn(x) {
+  //     if (random(1) < 0.05) {
+  //       let offset = randomGaussian() * 0.5;
+  //       let newx = x + offset;
+  //       return newx;
+  //     }
+  //     return x;
+  //   }
 
-    let ih = this.brain.input_weights.dataSync().map(fn);
-    let ih_shape = this.brain.input_weights.shape;
-    this.brain.input_weights.dispose();
-    this.brain.input_weights = tf.tensor(ih, ih_shape);
+  //   let ih = this.brain.input_weights.dataSync().map(fn);
+  //   let ih_shape = this.brain.input_weights.shape;
+  //   this.brain.input_weights.dispose();
+  //   this.brain.input_weights = tf.tensor(ih, ih_shape);
 
-    let ho = this.brain.output_weights.dataSync().map(fn);
-    let ho_shape = this.brain.output_weights.shape;
-    this.brain.output_weights.dispose();
-    this.brain.output_weights = tf.tensor(ho, ho_shape);
-  }
+  //   let ho = this.brain.output_weights.dataSync().map(fn);
+  //   let ho_shape = this.brain.output_weights.shape;
+  //   this.brain.output_weights.dispose();
+  //   this.brain.output_weights = tf.tensor(ho, ho_shape);
+  // }
 
   add_to_world () {
     this.init()
@@ -265,69 +308,106 @@ export default class Agent {
 	// }
 
 
-  update () {
-    var x           = this.x();
-    var y           = this.y();
-    var angle       = this.angle();
-    var nearFood    = this.getNearFood();
-    var angleToFood = 0;
+  async update () {
+    const nearFood = this.getNearFood()
+    let angleToFood = 0
 
-    if (this.hasCollision(nearFood)){
-      this.eat(nearFood);
-      nearFood = undefined;
-    } else if (nearFood) {
-      var pointSelf      = new SVG.math.Point(x, y);
-      var pointFood      = new SVG.math.Point(nearFood.x(), nearFood.y());
-      var pointDirection = new SVG.math.Point(
-        x + 20 * Math.sin( _toRadians(angle) ),
-        y - 20 * Math.cos( _toRadians(angle) )
-      );
+    this.status = nearFood ? 'see_food' : ''
 
-      var absAngleToFood = _toDegrees(SVG.math.angle(pointSelf, pointFood)) + 90;
-      absAngleToFood = absAngleToFood >= 360 ? absAngleToFood - 360 : absAngleToFood;
+    if (nearFood) {
+      let absAngleToFood = _angleBetweenPoints(this.position, nearFood.position)
 
-      var absAngleDirection = _toDegrees(SVG.math.angle(pointSelf, pointDirection)) + 90;
-      absAngleDirection = absAngleDirection >= 360 ? absAngleDirection - 360 : absAngleDirection;
-
-      angleToFood = Math.abs(absAngleToFood - absAngleDirection);
-      var sign = absAngleToFood > absAngleDirection ? 1 : -1;
-
-      if (angleToFood > 180) {
-        angleToFood = 180 - (angleToFood - 180);
-        sign = sign === -1 ? 1 : -1;
-      }
-
-      angleToFood *= sign;
+      angleToFood = absAngleToFood - this.angle
+      angleToFood = Math.abs(angleToFood) > _toRadians(270)
+        ? (Math2PI - Math.abs(angleToFood)) * -1
+        : angleToFood
     }
 
 
-    var rawData = {
-      isSeeFood      : !!nearFood,
-      angleToFood    : angleToFood,
-      distanceToFood : this.distanceTo(nearFood),
+    const rawData = {
+      isSeeFood: !!nearFood,
+      angleToFood,
+      distanceToFood: nearFood
+        ? _distanceBetweenPoints(this.position, nearFood.position)
+        : 0, // TODO: 0 or -1?
     };
 
+    const normalisedData = this.normalizeBrainData(rawData);
 
-    // let input = [distance_from_ground / width, vx / 4, vy / 4, torque / 4];
-		// let result = this.brain.predict(input);
+    // console.log('rawData: ', rawData)
+    // console.log('normalisedData: ', normalisedData)
+
+    const input = [
+      normalisedData.isSeeFood,
+      normalisedData.angleToFood,
+      normalisedData.distanceToFood,
+    ]
+
+    const result = await this.brain.predict(input)
+    const denormalisedData = this.denormalizeBrainData(result)
 
 
-    var normalisedData   = this.normalizeBrainData(rawData);
-    var result = this.activateBrain(normalisedData);
-    // var result = this.getBrainSignal();
-    var denormalisedData = this.denormalizeBrainData(result);
+    this.applyForce(denormalisedData.force)
+    this.applyAngularForce(denormalisedData.angularForce)
 
-    // log('\nrawData', rawData)
-    // log('normalisedData', normalisedData)
-    // log('result', result)
-    // log('denormalisedData', denormalisedData)
 
-    this.angle(angle + denormalisedData.angle);
-    this.speed(denormalisedData.speed);
-    this.move();
+    /**
+     * TODO: To be continued...
+     */
+
+
+    // // let input = [distance_from_ground / width, vx / 4, vy / 4, torque / 4];
+		// // let result = this.brain.predict(input);
+
+
+    // var normalisedData   = this.normalizeBrainData(rawData);
+    // var result = this.activateBrain(normalisedData);
+    // // var result = this.getBrainSignal();
+    // var denormalisedData = this.denormalizeBrainData(result);
+
+    // // log('\nrawData', rawData)
+    // // log('normalisedData', normalisedData)
+    // // log('result', result)
+    // // log('denormalisedData', denormalisedData)
+
+    // this.angle(angle + denormalisedData.angle);
+    // this.speed(denormalisedData.speed);
+    // this.move();
   }
 
-  eat (food) {
+  normalizeBrainData (data) {
+    if (data.distanceToFood === Infinity) data.distanceToFood = 0;
+
+    let angleToFood = data.angleToFood / (1 / Math2PI)
+
+    // round
+    angleToFood = data.angleToFood
+      ? Math.round(data.angleToFood * 1000) / 1000
+      : 0 // TODO: 0 or -1?
+
+    const distanceToFood = data.distanceToFood === 0
+      ? 0
+      : Math.round(1 / data.distanceToFood * 1000) / 1000
+
+    return {
+      isSeeFood: !!data.isSeeFood ? 1 : 0,
+      angleToFood,
+      distanceToFood
+    };
+  }
+
+  /**
+   * @param {array} input
+   */
+  denormalizeBrainData (input) {
+    return {
+      force: input[0],
+      angularForce: input[1]
+    };
+  }
+
+
+  bite (food) {
     if (!food) return
     food.destroy()
     // this.$body.m_force = Vec2.zero()
@@ -356,11 +436,15 @@ export default class Agent {
 
 
 
-
+/**
+ *
+ * @param {number} x
+ * @param {number} y
+ * @param {number} r - radius
+ * @param {number} startAngle - in radians
+ * @param {number} endAngle - in radians
+ */
 function _createVisionArcPath(x, y, r, startAngle, endAngle) {
-  startAngle = _toRadians(startAngle);
-  endAngle = _toRadians(endAngle);
-
   if(startAngle > endAngle){
     const s = startAngle;
     startAngle = endAngle;
@@ -372,25 +456,144 @@ function _createVisionArcPath(x, y, r, startAngle, endAngle) {
 
   const quarterAngle = _toDegrees(startAngle) / 2
 
-  // var largeArc = endAngle - startAngle <= Math.PI ? 0 : 1;
-
-
-  // if (!isPointsArray) {
-  //   return [
-  //     'M', x, y,
-  //     'L', x+Math.cos(startAngle)*r, y-(Math.sin(startAngle)*r),
-  //     'A', r, r, 0, 0, 1, x+Math.cos(endAngle)*r, y-(Math.sin(endAngle)*r),
-  //     'L', x, y
-  //     ].join(' ');
-  // } else {
   return [
     Vec2(x, y),
     Vec2(x + Math.cos(startAngle) * r, y - (Math.sin(startAngle) * r)),
-    Vec2(x + Math.cos(_toRadians(360 - quarterAngle)) * r, y - (Math.sin(_toRadians(360 - quarterAngle)) * r)),
+    Vec2(x + Math.cos(_toRadians(360 - quarterAngle)) * r, y + (Math.sin(_toRadians(360 - quarterAngle)) * r)),
     Vec2(x + Math.cos(0) * r, y - (Math.sin(0) * r)),
-    Vec2(x + Math.cos(_toRadians(quarterAngle)) * r, y - (Math.sin(_toRadians(quarterAngle)) * r)),
+    Vec2(x + Math.cos(_toRadians(quarterAngle)) * r, y + (Math.sin(_toRadians(quarterAngle)) * r)),
     Vec2(x + Math.cos(endAngle) * r, y - (Math.sin(endAngle) * r)),
     Vec2(x, y)
   ];
-  // }
 }
+
+
+
+
+
+
+// const tests = [
+//   {
+//     id: 'test1',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(0),
+//     food: {x: 20, y: 0},
+//     foodAngle: _toRadians(0),
+//     res: _toRadians(0)
+//   },
+//   {
+//     id: 'test2',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(0),
+//     food: {x: 20, y: -20},
+//     foodAngle: _toRadians(315),
+//     res: _toRadians(-45)
+//   },
+//   {
+//     id: 'test3',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(0),
+//     food: {x: 20, y: 20},
+//     foodAngle: _toRadians(45),
+//     res: _toRadians(45)
+//   },
+
+//   {
+//     id: 'test4',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(90),
+//     food: {x: 0, y: 20},
+//     foodAngle: _toRadians(90),
+//     res: _toRadians(0)
+//   },
+//   {
+//     id: 'test5',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(90),
+//     food: {x: 20, y: 20},
+//     foodAngle: _toRadians(45),
+//     res: _toRadians(-45)
+//   },
+//   {
+//     id: 'test6',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(90),
+//     food: {x: -20, y: 20},
+//     foodAngle: _toRadians(135),
+//     res: _toRadians(45)
+//   },
+
+//   {
+//     id: 'test7',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(180),
+//     food: {x: -20, y: 0},
+//     foodAngle: _toRadians(180),
+//     res: _toRadians(0)
+//   },
+//   {
+//     id: 'test8',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(180),
+//     food: {x: -20, y: 20},
+//     foodAngle: _toRadians(135),
+//     res: _toRadians(-45)
+//   },
+//   {
+//     id: 'test9',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(180),
+//     food: {x: -20, y: -20},
+//     foodAngle: _toRadians(225),
+//     res: _toRadians(45)
+//   },
+
+//   {
+//     id: 'test10',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(270),
+//     food: {x: 0, y: -20},
+//     foodAngle: _toRadians(270),
+//     res: _toRadians(0)
+//   },
+//   {
+//     id: 'test11',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(270),
+//     food: {x: -20, y: -20},
+//     foodAngle: _toRadians(225),
+//     res: _toRadians(-45)
+//   },
+//   {
+//     id: 'test12',
+//     agent: {x: 0, y: 0},
+//     agentAngle: _toRadians(270),
+//     food: {x: 20, y: -20},
+//     foodAngle: _toRadians(315),
+//     res: _toRadians(45)
+//   },
+// ]
+
+// _food.position = {
+//   x: this.position.x + tests[ind].food.x,
+//   y: this.position.y + tests[ind].food.y
+// }
+
+// for (let test of tests) {
+//   let absAngleToFood = _angleBetweenPoints(test.agent, test.food)
+//   let angleToFood = absAngleToFood - test.agentAngle
+
+//   angleToFood = Math.abs(angleToFood) > _toRadians(270)
+//     ? (Math.PI * 2 - Math.abs(angleToFood)) * -1
+//     : angleToFood
+
+//   const isCorrect = test.foodAngle === absAngleToFood && test.res === angleToFood
+//   const _log = isCorrect ? 'log' : 'error'
+
+//   console[_log](
+//     'TEST:', test.id,
+//     '  absAngleToFood:', absAngleToFood, _toDegrees(absAngleToFood), '=> ' + _toDegrees(test.foodAngle),
+//     '  angleToFood:', angleToFood, _toDegrees(angleToFood), '=> ' + _toDegrees(test.res),
+//     ''
+//   )
+// }

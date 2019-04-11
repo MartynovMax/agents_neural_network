@@ -1,19 +1,28 @@
 /* eslint-disable */
-import planck from 'planck-js/dist/planck-with-testbed.js'
+import Matter from 'matter-js'
 
-
-const pl = planck
-const Vec2 = pl.Vec2
 
 
 export default class Food {
   constructor (data) {
     this.world = data.world
 
-    this.id = data.id || _randomInteger(1e7, 1e8 - 1)
+    this.id = data.id || _generateUID()
     this.type = 'food'
-    this.value = 1
+    this.score = 0
+    this.fitness = 0
+    this.parents = []
     this.startParams = data || {}
+
+    // this._status = ''
+
+    // radians
+    this.visionAngle = _toRadians(110)
+    this.visionRadius = 70
+    this._visionArcPath = []
+
+    // this.colors = []
+    // this.brain = new NeuralNetwork(4, 100, 2)
 
     this.$body = null
 
@@ -26,7 +35,7 @@ export default class Food {
 
   get position () {
     if (!this.$body) return Vec2()
-    return this.$body.getPosition()
+    return this.$body.position
   }
 
   /**
@@ -34,21 +43,21 @@ export default class Food {
    */
   set position (vec) {
     if (!this.$body) return
-    this.$body.setPosition(vec)
+    Matter.Body.setPosition(this.$body, vec)
   }
 
 
   get width () {
-    return 0.25
+    return 4
   }
-  get height () {
-    return 0.25
-  }
+  // get height () {
+    // return 15
+  // }
 
 
   get angle () {
     if (!this.$body) return -1
-    return this.$body.getAngle()
+    return this.$body.angle
   }
 
   /**
@@ -56,73 +65,129 @@ export default class Food {
    */
   set angle (val) {
     if (!this.$body) return
-    this.$body.setAngle(val);
+    Matter.Body.setAngle(this.$body, val)
   }
 
 
+  // get status () {
+  //   return this._status
+  // }
+  // set status (val) {
+  //   let render
+
+  //   if (this._status === val) return
+
+  //   switch (val) {
+  //     case 'see_food': {
+  //       render = {fill: 'red', stroke: '#ffffff'}
+  //       break
+  //     }
+  //     default: {
+  //       render = {fill: '#0077ff', stroke: '#ffffff'}
+  //     }
+  //   }
+
+  //   this._status = val
+  //   this._fixture.render = render
+  //   console.log('render: ', render)
+  // }
+
+
   init () {
-    // var shape = pl.Box(this.width, this.height);
-    var shape = pl.Circle(this.width);
-    // var shape = pl.Polygon([
-    //   Vec2(-width, -height),
-    //   Vec2(0, -height / 5),
-    //   Vec2(width, -height),
-    //   Vec2(0, height / 2)
-    // ]);
+    var rect = Matter.Bodies.circle(
+      this.startParams.position.x,
+      this.startParams.position.y,
+      this.width,
+      {
+        id: this.id,
+        label: this.type,
+        frictionAir: 0.01
+      }
+    );
 
-    const fixtureDef = {
-      userData: this,
-      friction: 0.1,
-      restitution: 0.1,
-      // density: 1000 / Math.sqrt(data.kg)
-      density: 50,
+    Matter.Body.setMass(rect, 5)
 
-      filterGroupIndex: -1
-    }
-
-    // const $body = this.world.createDynamicBody({
-    const $body = this.world.$body.createBody({
-      linearDamping: 1.5,
-      angularDamping: 1
-    });
-
-    $body.createFixture(shape, fixtureDef, 1);
-
-    this.$body = $body
+    this.$body = rect;
 
     this.angle = this.startParams.angle || 0
-    this.position = this.startParams.position || Vec2()
+    // this.position = this.startParams.position || Vec2()
+  }
+
+
+  draw () {
+    // const ctx = this.world.canvas.getContext('2d')
+
+    // const x = this.position.x
+    // const y = this.position.y
+    // let pathArea = this._visionArcPath
+
+    // const baseX = pathArea[0].x + x
+    // const baseY = pathArea[0].y + y
+
+    // pathArea = pathArea.map((point) => {
+    //   return _rotatePoint(
+    //     point.x + x,
+    //     point.y + y,
+    //     baseX,
+    //     baseY,
+    //     this.angle
+    //   );
+    // });
+
+    // ctx.beginPath();
+    // ctx.moveTo(pathArea[0].x, pathArea[0].y);
+
+    // for (var i = 1; i < pathArea.length; i++) {
+    //   ctx.lineTo(pathArea[i].x, pathArea[i].y);
+    // }
+
+    // ctx.lineWidth = 1;
+    // ctx.strokeStyle = '#ccc';
+    // ctx.stroke();
   }
 
 
   // applyForce (force) {
-  //   var f = this.$body.getWorldVector(Vec2(0.0, -1.0));
-  //   var p = this.$body.getWorldPoint(Vec2(0.0, 2.0));
-  //   this.$body.applyLinearImpulse(f, p, true);
+  //   Matter.Body.applyForce(this.$body, this.position, {
+  //     x: Math.cos(this.angle) * force,
+  //     y: Math.sin(this.angle) * force
+  //   });
   // }
 
   // /**
   //  * @param {number} impulse
   //  */
   // applyAngularForce (impulse) {
-  //   this.$body.applyAngularImpulse(impulse, true)
+  //   Matter.Body.setAngularVelocity(this.$body, impulse);
   // }
+
+
+
+  // clone () {
+  //   let params = Object.assign({}, this.startParams);
+  //   params = Object.assign(params, {
+  //     position: this.position,
+  //     angle: this.angle
+  //   });
+
+	// 	let newEntity = new Agent(params);
+	// 	newEntity.brain.dispose();
+	// 	newEntity.brain = this.brain.clone();
+
+	// 	return newEntity;
+  // }
+
 
 
   // kill () {
-  //   this.world.destroyBody(this.$body)
+  //   this.world.$body.destroyBody(this.$body)
+
+	// 	// Dispose its brain
+	// 	this.brain.dispose();
   // }
 
   destroy () {
-    this.world.$body.destroyBody(this.$body)
+    this.world.emit('food:destroy', this)
     this.world.removeSubject(this)
   }
-
-}
-
-
-function _randomInteger(min, max) {
-  var rand = min + Math.random() * (max - min);
-  rand = Math.round(rand);
-  return rand;
 }
